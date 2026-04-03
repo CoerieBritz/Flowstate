@@ -1,6 +1,6 @@
 # ⚡ Netwatch
 
-**Open-source local network monitor with SOAR capabilities — a free GlassWire alternative**
+**Open-source local network monitor with SOAR capabilities —**
 
 Netwatch gives you real-time visibility into every connection leaving your machine. It correlates alerts into incidents, enriches threat indicators with VirusTotal and AbuseIPDB, and lets you automate detection logic with YAML playbooks — all running entirely on your own hardware. No cloud, no subscriptions, no telemetry.
 
