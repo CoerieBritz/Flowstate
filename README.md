@@ -247,7 +247,7 @@ All data is stored locally in the `data/` directory:
 | | GlassWire | Netwatch |
 |---|-----------|----------|
 | Price | $29–$99/yr | Free |
-| Open source | No | Yes (MIT) |
+| Open source | No | Yes (AGPL-3.0) |
 | Data storage | Cloud + local | 100% local |
 | Telemetry | Yes | None |
 | Threat intel | Basic | Feeds + VT + AbuseIPDB |
@@ -283,6 +283,6 @@ Please keep PRs focused — one feature or fix per PR.
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+AGPL-3.0 — see [LICENSE](LICENSE) for details.
 
 Copyright (c) 2026 Coerie
