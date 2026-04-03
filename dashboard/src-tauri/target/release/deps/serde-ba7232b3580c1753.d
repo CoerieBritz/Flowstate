@@ -1,0 +1,14 @@
+D:\##Claude Projects\Netwatch\files\dashboard\src-tauri\target\release\deps\serde-ba7232b3580c1753.d: C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs D:\##Claude\ Projects\Netwatch\files\dashboard\src-tauri\target\release\build\serde-5ce3b595cfc83e6b\out/private.rs
+
+D:\##Claude Projects\Netwatch\files\dashboard\src-tauri\target\release\deps\libserde-ba7232b3580c1753.rlib: C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs D:\##Claude\ Projects\Netwatch\files\dashboard\src-tauri\target\release\build\serde-5ce3b595cfc83e6b\out/private.rs
+
+D:\##Claude Projects\Netwatch\files\dashboard\src-tauri\target\release\deps\libserde-ba7232b3580c1753.rmeta: C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs D:\##Claude\ Projects\Netwatch\files\dashboard\src-tauri\target\release\build\serde-5ce3b595cfc83e6b\out/private.rs
+
+C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs:
+C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs:
+C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs:
+C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs:
+C:\Users\Newbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs:
+D:\##Claude\ Projects\Netwatch\files\dashboard\src-tauri\target\release\build\serde-5ce3b595cfc83e6b\out/private.rs:
+
+# env-dep:OUT_DIR=D:\\##Claude Projects\\Netwatch\\files\\dashboard\\src-tauri\\target\\release\\build\\serde-5ce3b595cfc83e6b\\out

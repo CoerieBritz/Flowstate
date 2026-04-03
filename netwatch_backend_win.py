@@ -35,6 +35,7 @@ These are sent in every WebSocket frame as:
   lan_devices : list  – [{ip, mac, hostname, type}, …]
 """
 
+import argparse
 import asyncio
 import json
 import re
@@ -49,6 +50,25 @@ import ctypes
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
+
+# ── CLI arguments ─────────────────────────────────────────────────────────────
+# Parsed early so path constants below can reference --data-dir immediately.
+# parse_known_args is used so Tauri/PyInstaller can inject extra flags safely.
+_arg_parser = argparse.ArgumentParser(
+    description="Netwatch backend",
+    add_help=True,
+)
+_arg_parser.add_argument(
+    "--data-dir",
+    default=None,
+    metavar="PATH",
+    help=(
+        "Directory for runtime data (history.db, settings.json, snapshots/). "
+        "Defaults to ./data/ next to the script/executable when omitted. "
+        "Set automatically by the Tauri wrapper to %%APPDATA%%\\com.coerie.netwatch."
+    ),
+)
+_cli_args, _unknown_args = _arg_parser.parse_known_args()
 
 # ── SOAR / Threat Intel (optional — degrades gracefully if soar/ is absent) ──
 _SOAR_DIR = Path(__file__).parent / "soar"
@@ -120,14 +140,28 @@ WS_HOST = "localhost"
 WS_PORT = 8765
 POLL_INTERVAL = 1.0           # seconds between network polls (overridden by settings)
 ARP_SCAN_INTERVAL = 30.0      # seconds between ARP / gateway re-scans
-DB_PATH = Path(__file__).parent / "data" / "history.db"
 ALERT_BANDWIDTH_THRESHOLD = 100 * 1024 * 1024   # 100 MB/hour per app
 MAX_HISTORY_DAYS = 30
 
-# === SETTINGS ================================================================
+# === PATHS ===================================================================
+# _DATA_DIR is set from --data-dir if supplied (Tauri sets %APPDATA%\com.coerie.netwatch),
+# otherwise falls back to ./data/ next to the running executable/script.
 
-_DATA_DIR = Path(__file__).parent / "data"
+def _resolve_data_dir() -> Path:
+    if _cli_args.data_dir:
+        return Path(_cli_args.data_dir)
+    # When frozen by PyInstaller (--onefile), __file__ points to the temp
+    # extraction dir which is cleaned up after exit.  Use the exe's real
+    # location so data survives across runs.
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent / "data"
+    return Path(__file__).parent / "data"
+
+_DATA_DIR = _resolve_data_dir()
 _SETTINGS_PATH = _DATA_DIR / "settings.json"
+DB_PATH = _DATA_DIR / "history.db"
+
+# === SETTINGS ================================================================
 
 DEFAULT_SETTINGS: dict = {
     "threat_intel": {

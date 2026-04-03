@@ -6,7 +6,13 @@
       "Bash(python -m py_compile netwatch_backend_win.py)",
       "Bash(python3 -m py_compile \"/mnt/d/##Claude Projects/Netwatch/files/netwatch_backend_win.py\")",
       "Bash(npm install:*)",
-      "Bash(curl -s https://www.gnu.org/licenses/agpl-3.0.txt)"
+      "Bash(curl -s https://www.gnu.org/licenses/agpl-3.0.txt)",
+      "Read(//mnt/d/##Claude Projects/Netwatch/files/soar/**)",
+      "Read(//mnt/d/##Claude Projects/Netwatch/files/playbooks/**)",
+      "Bash(xargs -I {} basename {})",
+      "Bash(mkdir -p \"/mnt/d/##Claude Projects/Netwatch/files/dashboard/src-tauri/src\")",
+      "Bash(mkdir -p \"/mnt/d/##Claude Projects/Netwatch/files/dashboard/src-tauri/capabilities\")",
+      "Bash(mkdir -p \"/mnt/d/##Claude Projects/Netwatch/files/dashboard/src-tauri/binaries\")"
     ]
   }
 }
