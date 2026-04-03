@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+
+# Node
+node_modules/
+dashboard/node_modules/
+dashboard/dist/
+
+# Data (user-specific)
+data/history.db
+data/settings.json
+data/audit.log
+data/blocklist.txt
+data/snapshots/
+
+# Threat feeds (downloaded per user)
+soar/feeds/*.csv
+soar/feeds/*.txt
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+
+# IDE
+.vscode/
+.idea/

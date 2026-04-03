@@ -1,0 +1,33 @@
+# Playbook: Bandwidth Anomaly
+# =========================================
+# Triggers when the correlator detects a 2x bandwidth spike (Rule R4).
+# Enriches destination IPs with VirusTotal to rule out data exfiltration.
+# Recommends Snapshot + continued monitoring, or Kill + Block if suspicious.
+#
+# ALERT-ONLY: no action is taken automatically.
+
+name: bandwidth_anomaly
+display_name: Bandwidth Anomaly
+description: >
+  Triggered when a process exceeds 2x its rolling 1-hour bandwidth average.
+  Checks destination IPs for threat indicators. A clean destination suggests
+  a legitimate transfer; flagged destinations warrant immediate investigation.
+enabled: true
+
+trigger:
+  type: bandwidth_spike
+
+enrichment:
+  virustotal: true
+  abuseipdb: false
+
+incident:
+  severity: MEDIUM
+  recommended_actions:
+    - Capture a snapshot immediately to preserve the current connection state
+    - Identify what the process is uploading or downloading (file type, destination domain)
+    - Check VirusTotal results for destination IPs — malicious hits suggest exfiltration
+    - If destination is unknown or flagged, kill the process and block the IP
+    - If destination is a trusted CDN (e.g. Akamai, Cloudfront), monitor for 5 minutes
+    - Review recent file access and clipboard activity for the process
+    - Check parent process and launch arguments for suspicious injection indicators

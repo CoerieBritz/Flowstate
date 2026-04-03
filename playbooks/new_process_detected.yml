@@ -1,0 +1,32 @@
+# Playbook: New Process First Outbound
+# =========================================
+# Triggers on the first observed outbound connection from a process that
+# was not previously seen (correlator Rule R5).
+# Enriches the destination IP to determine whether it is benign or suspicious.
+#
+# ALERT-ONLY: no action is taken automatically.
+
+name: new_process_detected
+display_name: New Process First Outbound
+description: >
+  A process made its first observed outbound connection. Could be a newly
+  installed application, a scheduled task, or malware establishing C2.
+  Enrichment results help distinguish expected software from suspicious activity.
+enabled: true
+
+trigger:
+  type: new_process
+
+enrichment:
+  virustotal: true
+  abuseipdb: true
+
+incident:
+  severity: LOW
+  recommended_actions:
+    - Verify the process is a trusted and expected application on this machine
+    - Check the process launch path — an unusual directory (Temp, AppData) is suspicious
+    - Look up the destination IP using the Lookup button for VirusTotal and AbuseIPDB context
+    - If AbuseIPDB confidence > 30 or any VT malicious hits, block via the Firewall tab
+    - Check the parent process and its arguments for signs of injection or scripting
+    - If the process is unrecognised, capture a snapshot and consider killing it immediately

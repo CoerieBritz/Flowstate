@@ -1,0 +1,33 @@
+# Playbook: Suspicious Outbound Traffic
+# =========================================
+# Triggers when any active connection is flagged by a local threat feed.
+# Enriches with VirusTotal + AbuseIPDB for confirmation and context.
+# Recommends Block + Kill + Snapshot based on enrichment confidence.
+#
+# ALERT-ONLY: no action is taken automatically.
+
+name: suspicious_outbound
+display_name: Suspicious Outbound Traffic
+description: >
+  Triggers on connections flagged by local threat intelligence feeds
+  (Feodo C2, URLhaus, ET Compromised, Spamhaus DROP). Enriches with
+  VirusTotal and AbuseIPDB to confirm severity before recommending action.
+enabled: true
+
+trigger:
+  type: threat_flagged
+  min_severity: medium
+
+enrichment:
+  virustotal: true
+  abuseipdb: true
+
+incident:
+  severity: HIGH
+  recommended_actions:
+    - Review VirusTotal and AbuseIPDB results for the flagged destination IP
+    - If detection ratio > 5/87 or AbuseIPDB confidence > 50, consider blocking the IP immediately
+    - Kill the offending process if it cannot be explained (use Kill button)
+    - Capture a snapshot for forensic analysis before taking action
+    - Add the IP to the persistent blocklist for future reference
+    - Investigate the process launch path, parent, and any recent file system changes

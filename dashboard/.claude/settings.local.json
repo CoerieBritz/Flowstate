@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ':*)",
+      "Bash(npm run:*)",
+      "Bash(python -m py_compile netwatch_backend_win.py)",
+      "Bash(python3 -m py_compile \"/mnt/d/##Claude Projects/Netwatch/files/netwatch_backend_win.py\")",
+      "Bash(npm install:*)",
+      "Bash(curl -s https://www.gnu.org/licenses/agpl-3.0.txt)"
+    ]
+  }
+}

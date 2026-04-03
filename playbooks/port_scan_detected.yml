@@ -1,0 +1,34 @@
+# Playbook: Inbound Port Scan
+# =========================================
+# Triggers when a single remote IP is observed connecting to 5 or more
+# of our local ports in the current connection snapshot.
+# Recommends immediate block — port scans typically precede exploitation.
+#
+# ALERT-ONLY: no action is taken automatically.
+
+name: port_scan_detected
+display_name: Inbound Port Scan
+description: >
+  A single remote IP is actively probing multiple local ports. This is
+  a strong precursor to exploitation. Immediate IP block is recommended
+  while investigation continues.
+enabled: true
+
+trigger:
+  type: port_scan
+  min_port_count: 5
+
+enrichment:
+  virustotal: true
+  abuseipdb: true
+
+incident:
+  severity: CRITICAL
+  recommended_actions:
+    - Block the source IP immediately using the Block button
+    - Look up the IP with the Lookup button for threat intelligence context
+    - Capture a snapshot to record the full list of scanned ports
+    - Check whether any of the probed ports are running exploitable services
+    - Review firewall rules — ensure only required inbound ports are open
+    - If exploitation is suspected, isolate the machine and review authentication logs
+    - Add the IP to the persistent blocklist for future reference
