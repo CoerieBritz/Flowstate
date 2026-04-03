@@ -29,3 +29,15 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Build artifacts
+build/
+dist/
+dashboard/src-tauri/target/
+dashboard/dist/
+*.spec
+*.exe
+!START_NETWATCH.bat
+!build_backend.bat
+!build_release.bat
+!build_dev.bat
