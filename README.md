@@ -240,24 +240,6 @@ All data is stored locally in the `data/` directory:
 | Data | SQLite (via Python stdlib `sqlite3`) |
 | Threat Intel | [Feodo Tracker](https://feodotracker.abuse.ch/), [URLhaus](https://urlhaus.abuse.ch/), [Spamhaus](https://www.spamhaus.org/drop/), [Emerging Threats](https://rules.emergingthreats.net/), VirusTotal API, AbuseIPDB API |
 
----
-
-## Comparison with GlassWire
-
-| | GlassWire | Netwatch |
-|---|-----------|----------|
-| Price | $29–$99/yr | Free |
-| Open source | No | Yes (AGPL-3.0) |
-| Data storage | Cloud + local | 100% local |
-| Telemetry | Yes | None |
-| Threat intel | Basic | Feeds + VT + AbuseIPDB |
-| Incident correlation | No | Yes (5 rules) |
-| Automation / playbooks | No | Yes (YAML) |
-| Response actions | No | Block, Kill, Snapshot |
-| Customizable | No | Fully |
-| Platform | Windows / Android | Windows (Linux/macOS partial) |
-
----
 
 ## Contributing
 
