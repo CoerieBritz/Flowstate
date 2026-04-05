@@ -12,7 +12,8 @@
       "Bash(xargs -I {} basename {})",
       "Bash(mkdir -p \"/mnt/d/##Claude Projects/Netwatch/files/dashboard/src-tauri/src\")",
       "Bash(mkdir -p \"/mnt/d/##Claude Projects/Netwatch/files/dashboard/src-tauri/capabilities\")",
-      "Bash(mkdir -p \"/mnt/d/##Claude Projects/Netwatch/files/dashboard/src-tauri/binaries\")"
+      "Bash(mkdir -p \"/mnt/d/##Claude Projects/Netwatch/files/dashboard/src-tauri/binaries\")",
+      "Bash(ls -la \"/mnt/d/##Claude Projects/Netwatch/files/dashboard/LICENSE\"*)"
     ]
   }
 }
