@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Netwatch",
+  "productName": "FlowState",
   "version": "1.0.0",
-  "identifier": "com.coerie.netwatch",
+  "identifier": "com.coerie.flowstate",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Netwatch - Local Network Monitor",
+        "title": "FlowState - Local Network Monitor",
         "width": 1400,
         "height": 900,
         "resizable": true,

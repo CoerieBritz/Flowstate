@@ -1,8 +1,8 @@
-# ⚡ Netwatch
+# ⚡ FlowState
 
 **Open-source local network monitor with SOAR capabilities —**
 
-Netwatch gives you real-time visibility into every connection leaving your machine. It correlates alerts into incidents, enriches threat indicators with VirusTotal and AbuseIPDB, and lets you automate detection logic with YAML playbooks — all running entirely on your own hardware. No cloud, no subscriptions, no telemetry.
+FlowState gives you real-time visibility into every connection leaving your machine. It correlates alerts into incidents, enriches threat indicators with VirusTotal and AbuseIPDB, and lets you automate detection logic with YAML playbooks — all running entirely on your own hardware. No cloud, no subscriptions, no telemetry.
 
 ---
 
@@ -83,7 +83,7 @@ Netwatch gives you real-time visibility into every connection leaving your machi
 │                                                               │
 │  ┌─────────────────────────┐      ┌────────────────────────┐ │
 │  │   Python Backend         │      │   React Dashboard       │ │
-│  │  netwatch_backend_win.py │      │   dashboard/ (Vite)    │ │
+│  │  flowstate_backend_win.py │      │   dashboard/ (Vite)    │ │
 │  │                          │      │                         │ │
 │  │  psutil — connection &   │      │  📈 Traffic graph       │ │
 │  │  process polling         │◄────►│  📊 Analytics / Sankey  │ │
@@ -115,14 +115,14 @@ The backend polls every second (configurable), evaluates all SOAR modules in seq
 
 - **Python 3.12+** — [python.org](https://www.python.org/downloads/)
 - **Node.js 18+** — [nodejs.org](https://nodejs.org/)
-- **Windows** — the backend uses `psutil` and `netsh` for Windows firewall integration. Linux/macOS support is available via `netwatch_backend.py` but response actions (block/kill) are platform-specific.
+- **Windows** — the backend uses `psutil` and `netsh` for Windows firewall integration. Linux/macOS support is available via `flowstate_backend.py` but response actions (block/kill) are platform-specific.
 
 ### Install
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-username/netwatch.git
-cd netwatch
+git clone https://github.com/your-username/flowstate.git
+cd flowstate
 
 # Install Python dependencies
 pip install psutil websockets
@@ -147,7 +147,7 @@ This script self-elevates to Administrator, installs any missing dependencies, a
 
 ```bash
 # Terminal 1 — backend (run as Administrator on Windows)
-python netwatch_backend_win.py
+python flowstate_backend_win.py
 
 # Terminal 2 — dashboard
 cd dashboard

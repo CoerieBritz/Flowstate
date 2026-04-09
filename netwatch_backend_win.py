@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-NETWATCH - Local Network Monitor Backend (Windows)
+FLOWSTATE - Local Network Monitor Backend (Windows)
 ===================================================
 Windows-native version. Run from PowerShell as Administrator:
 
@@ -55,7 +55,7 @@ from pathlib import Path
 # Parsed early so path constants below can reference --data-dir immediately.
 # parse_known_args is used so Tauri/PyInstaller can inject extra flags safely.
 _arg_parser = argparse.ArgumentParser(
-    description="Netwatch backend",
+    description="FlowState backend",
     add_help=True,
 )
 _arg_parser.add_argument(
@@ -177,6 +177,12 @@ DEFAULT_SETTINGS: dict = {
     "display": {
         "max_connections_shown": 100,
         "max_apps_shown":        30,
+    },
+    "retention": {
+        "connection_history_days": 30,
+        "event_log_days":          90,
+        "traffic_log_days":        30,
+        "alerts_days":             90,
     },
 }
 
@@ -1284,7 +1290,7 @@ def fmt(b: float) -> str:
 def print_terminal_dashboard(data: dict):
     os.system("cls")
     print("=" * 70)
-    print("  ⚡ NETWATCH — Local Network Monitor  [Windows]")
+    print("  ⚡ FLOWSTATE — Local Network Monitor  [Windows]")
     print("=" * 70)
     print(f"  Total ↓ {fmt(data['total_recv'])}/s  |  ↑ {fmt(data['total_sent'])}/s")
     print(f"  Gateway: {data['gateway'] or '(unknown)'}  |  Local IP: {data['local_ip'] or '(unknown)'}")
@@ -1322,7 +1328,7 @@ async def main():
     monitor = NetworkMonitor()
 
     def handle_exit(sig, frame):
-        print("\n[NETWATCH] Shutting down…")
+        print("\n[FLOWSTATE] Shutting down…")
         monitor.running = False
         monitor.db.close()
         sys.exit(0)
@@ -1332,7 +1338,7 @@ async def main():
         signal.signal(signal.SIGBREAK, handle_exit)
 
     print("=" * 55)
-    print("  ⚡ NETWATCH — Local Network Monitor  [Windows]")
+    print("  ⚡ FLOWSTATE — Local Network Monitor  [Windows]")
     print("=" * 55)
     print(f"  Database : {DB_PATH}")
 
@@ -1355,11 +1361,15 @@ async def main():
             lambda ws: ws_handler(monitor, ws),
             WS_HOST, WS_PORT,
         ):
-            await broadcast(monitor)
+            await asyncio.gather(
+                broadcast(monitor),
+            )
     else:
         print("  Mode: Terminal only (pip install websockets for dashboard)")
         print("=" * 55)
-        await terminal_loop(monitor)
+        await asyncio.gather(
+            terminal_loop(monitor),
+        )
 
 
 if __name__ == "__main__":

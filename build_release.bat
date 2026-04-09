@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 
 echo ============================================================
-echo  Netwatch - Full Release Build
+echo  FlowState - Full Release Build
 echo  Produces: dashboard\src-tauri\target\release\bundle\
 echo ============================================================
 echo.

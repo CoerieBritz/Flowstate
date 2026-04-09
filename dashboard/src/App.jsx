@@ -8,7 +8,11 @@ import {
 import {
   geoNaturalEarth1, geoPath, geoInterpolate, geoGraticule,
 } from "d3-geo";
-import { feature, mesh } from "topojson-client";
+import * as topojson from "topojson-client";
+import {
+  LineChart, Line, BarChart, Bar, AreaChart, Area,
+  XAxis, YAxis, Tooltip, ResponsiveContainer,
+} from "recharts";
 
 const WS_URL = "ws://localhost:8765";
 
@@ -116,7 +120,7 @@ function TrafficGraph({ history, width, height }) {
       ctx.beginPath(); ctx.moveTo(50, y); ctx.lineTo(width - 10, y); ctx.stroke();
     }
 
-    if (history.length < 2) {
+    if (history.length < 1) {
       ctx.fillStyle = "#475569";
       ctx.font = "11px monospace";
       ctx.textAlign = "center";
@@ -124,24 +128,25 @@ function TrafficGraph({ history, width, height }) {
       return;
     }
 
-    const maxVal = Math.max(...history.map((h) => Math.max(h.sent || 0, h.recv || 0)), 1024);
+    const pts = history.length >= 2 ? history : [history[0], history[0]];
+    const maxVal = Math.max(...pts.map((h) => Math.max(h.sent || 0, h.recv || 0)), 1024);
     const gH = height - 50, gW = width - 60;
-    const step = gW / (history.length - 1);
+    const step = gW / (pts.length - 1);
     const xOf = (i) => 50 + i * step;
     const yOf = (v) => 20 + gH - (v / maxVal) * gH;
 
     const drawArea = (field, gradTop, gradBot, lineColor) => {
       ctx.beginPath();
       ctx.moveTo(xOf(0), 20 + gH);
-      history.forEach((h, i) => ctx.lineTo(xOf(i), yOf(h[field] || 0)));
-      ctx.lineTo(xOf(history.length - 1), 20 + gH);
+      pts.forEach((h, i) => ctx.lineTo(xOf(i), yOf(h[field] || 0)));
+      ctx.lineTo(xOf(pts.length - 1), 20 + gH);
       ctx.closePath();
       const g = ctx.createLinearGradient(0, 20, 0, 20 + gH);
       g.addColorStop(0, gradTop); g.addColorStop(1, gradBot);
       ctx.fillStyle = g; ctx.fill();
 
       ctx.beginPath();
-      history.forEach((h, i) => {
+      pts.forEach((h, i) => {
         const x = xOf(i), y = yOf(h[field] || 0);
         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       });
@@ -149,8 +154,8 @@ function TrafficGraph({ history, width, height }) {
       ctx.shadowColor = lineColor; ctx.shadowBlur = 8;
       ctx.stroke(); ctx.shadowBlur = 0;
 
-      const last = history[history.length - 1];
-      const lx = xOf(history.length - 1);
+      const last = pts[pts.length - 1];
+      const lx = xOf(pts.length - 1);
       const ly = yOf(last[field] || 0);
       ctx.beginPath(); ctx.arc(lx, ly, 4, 0, Math.PI * 2);
       ctx.fillStyle = lineColor; ctx.shadowColor = lineColor; ctx.shadowBlur = 12;
@@ -540,8 +545,8 @@ function GlobalConnectionMap({ connections, apps }) {
     const W = containerWidth;
 
     // Build GeoJSON objects from TopoJSON
-    const countries = feature(topoData, topoData.objects.countries);
-    const borders   = mesh(topoData, topoData.objects.countries, (a, b) => a !== b);
+    const countries = topojson.feature(topoData, topoData.objects.countries);
+    const borders   = topojson.mesh(topoData, topoData.objects.countries, (a, b) => a !== b);
     const gratLines = geoGraticule()();
 
     // Natural Earth projection fitted to canvas
@@ -736,12 +741,12 @@ function GlobalConnectionMap({ connections, apps }) {
       {/* Loading / error states */}
       {geoError && (
         <div style={{ height: 260, display: "flex", alignItems: "center", justifyContent: "center", color: "#475569", fontSize: 12, background: "#0a0e17", borderRadius: 8 }}>
-          Could not load world map — check network connectivity.
+          Map unavailable
         </div>
       )}
       {!geoError && !topoData && (
         <div style={{ height: 260, display: "flex", alignItems: "center", justifyContent: "center", color: "#475569", fontSize: 12, background: "#0a0e17", borderRadius: 8 }}>
-          Loading world map…
+          Map loading...
         </div>
       )}
 
@@ -1910,7 +1915,7 @@ function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
                       "block_ip", { ip },
                       `Block IP ${ip}`,
                       `Add Windows Firewall rules blocking all inbound and outbound traffic to/from ${ip}. Triggered by incident: "${incident.title}".`,
-                      `netsh advfirewall firewall add rule name="Netwatch Block OUT ${ip}" dir=out action=block remoteip=${ip}`,
+                      `netsh advfirewall firewall add rule name="FlowState Block OUT ${ip}" dir=out action=block remoteip=${ip}`,
                       false,
                     )}
                   />
@@ -3295,9 +3300,13 @@ function PlaybooksTab({
 }
 
 // ════════════════════════════════════════════════════════════════════
+// SETTINGS TAB — begins below (SIEM tab removed)
+// ════════════════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════════════════
 // SETTINGS TAB
 // ════════════════════════════════════════════════════════════════════
-const NETWATCH_VERSION = "1.0.0";
+const FLOWSTATE_VERSION = "1.0.0";
 
 function SettingsSection({ title, children }) {
   return (
@@ -3375,10 +3384,11 @@ function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsReady }) {
     }
   };
 
-  const ti      = draft.threat_intel  || {};
-  const alerts  = draft.alerts        || {};
-  const display = draft.display       || {};
-  const feeds   = soarStats?.feeds    || [];
+  const ti        = draft.threat_intel  || {};
+  const alerts    = draft.alerts        || {};
+  const display   = draft.display       || {};
+  const retention = draft.retention     || {};
+  const feeds     = soarStats?.feeds    || [];
 
   return (
     <div style={{ maxWidth: 760 }}>
@@ -3495,6 +3505,50 @@ function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsReady }) {
         <SaveRow onSave={() => handleSave("display")} wsReady={wsReady} saving={saving} />
       </SettingsSection>
 
+      {/* ── Data Retention ───────────────────────────────────────── */}
+      <SettingsSection title="DATA RETENTION">
+        <div style={{ fontSize: 11, color: "#64748b", marginBottom: 14, lineHeight: 1.7 }}>
+          Configure how long historical data is kept in{" "}
+          <code style={{ color: "#38bdf8", fontSize: 10 }}>data/history.db</code>.
+          Cleanup runs on startup and then every 24 hours.
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <SettingsField label="Connection history (days)" hint="default 30">
+            <input
+              type="number" min={1} max={365}
+              value={retention.connection_history_days ?? 30}
+              onChange={(e) => set("retention", "connection_history_days", Number(e.target.value))}
+              style={INPUT_STYLE}
+            />
+          </SettingsField>
+          <SettingsField label="Security event log (days)" hint="default 90">
+            <input
+              type="number" min={1} max={365}
+              value={retention.event_log_days ?? 90}
+              onChange={(e) => set("retention", "event_log_days", Number(e.target.value))}
+              style={INPUT_STYLE}
+            />
+          </SettingsField>
+          <SettingsField label="Traffic log (days)" hint="default 30">
+            <input
+              type="number" min={1} max={365}
+              value={retention.traffic_log_days ?? 30}
+              onChange={(e) => set("retention", "traffic_log_days", Number(e.target.value))}
+              style={INPUT_STYLE}
+            />
+          </SettingsField>
+          <SettingsField label="Alerts log (days)" hint="default 90">
+            <input
+              type="number" min={1} max={365}
+              value={retention.alerts_days ?? 90}
+              onChange={(e) => set("retention", "alerts_days", Number(e.target.value))}
+              style={INPUT_STYLE}
+            />
+          </SettingsField>
+        </div>
+        <SaveRow onSave={() => handleSave("retention")} wsReady={wsReady} saving={saving} />
+      </SettingsSection>
+
       {/* ── Feed Management ──────────────────────────────────────── */}
       <SettingsSection title="THREAT FEED MANAGEMENT">
         {soarStats ? (
@@ -3585,7 +3639,7 @@ function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsReady }) {
       </SettingsSection>
 
       {/* ── About ────────────────────────────────────────────────── */}
-      <SettingsSection title="ABOUT NETWATCH">
+      <SettingsSection title="ABOUT FLOWSTATE">
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{
@@ -3595,9 +3649,9 @@ function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsReady }) {
               fontSize: 20, color: "#0a0e17", fontWeight: 900,
             }}>⚡</div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#38bdf8", letterSpacing: 1 }}>NETWATCH</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#38bdf8", letterSpacing: 1 }}>FLOWSTATE</div>
               <div style={{ fontSize: 9, color: "#475569", letterSpacing: 1.5 }}>
-                v{NETWATCH_VERSION} · LOCAL NETWORK MONITOR
+                v{FLOWSTATE_VERSION} · LOCAL NETWORK MONITOR
               </div>
             </div>
           </div>
@@ -3712,6 +3766,7 @@ export default function NetMonitor() {
     threat_intel: { virustotal_api_key: "", abuseipdb_api_key: "", auto_lookup_flagged: true, cache_ttl_hours: 24 },
     alerts:       { bandwidth_threshold_mb: 100, poll_interval_seconds: 1 },
     display:      { max_connections_shown: 100, max_apps_shown: 30 },
+    retention:    { connection_history_days: 30, event_log_days: 90, traffic_log_days: 30, alerts_days: 90 },
   });
   const [newBlocklistIp, setNewBlocklistIp] = useState("");
   const [searchFilter, setSearchFilter] = useState("");
@@ -3793,10 +3848,7 @@ export default function NetMonitor() {
         setTotalRecv((p) => p + (data.total_recv || 0));
 
         // Rolling 2-min history for the graph
-        setHistory((prev) => {
-          const next = [...prev, { sent: data.total_sent || 0, recv: data.total_recv || 0, time: Date.now() }];
-          return next.length > 120 ? next.slice(-120) : next;
-        });
+        setHistory(prev => [...prev.slice(-119), {recv: data.total_recv, sent: data.total_sent, time: Date.now()}]);
 
         // Per-app history: keep 300 samples (5 min at 1 Hz)
         setAppHistory((prev) => {
@@ -4007,7 +4059,7 @@ export default function NetMonitor() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 36, height: 36, borderRadius: 8, background: "linear-gradient(135deg,#0ea5e9,#06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 900, color: "#0a0e17", boxShadow: "0 0 20px rgba(14,165,233,0.3)" }}>⚡</div>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: 1.5, color: "#38bdf8" }}>NETWATCH</div>
+            <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: 1.5, color: "#38bdf8" }}>FLOWSTATE</div>
             <div style={{ fontSize: 9, color: "#64748b", letterSpacing: 2 }}>LOCAL NETWORK MONITOR</div>
           </div>
         </div>
@@ -4265,7 +4317,7 @@ export default function NetMonitor() {
                             "unblock_ip", { ip },
                             `Unblock IP ${ip}`,
                             `Remove Windows Firewall rules for ${ip}. Traffic to/from this IP will be permitted again.`,
-                            `netsh advfirewall firewall delete rule name="Netwatch Block OUT ${ip}"`,
+                            `netsh advfirewall firewall delete rule name="FlowState Block OUT ${ip}"`,
                             false,
                           )}
                         />
@@ -4292,7 +4344,7 @@ export default function NetMonitor() {
                             "block_ip", { ip },
                             `Block IP ${ip}`,
                             `Add Windows Firewall rules to block all traffic to/from ${ip}.`,
-                            `netsh advfirewall firewall add rule name="Netwatch Block OUT ${ip}" dir=out action=block remoteip=${ip}`,
+                            `netsh advfirewall firewall add rule name="FlowState Block OUT ${ip}" dir=out action=block remoteip=${ip}`,
                             false,
                           )}
                         />
@@ -4429,7 +4481,7 @@ export default function NetMonitor() {
                                     "block_ip", { ip: c.remote },
                                     `Block IP ${c.remote}`,
                                     `Add Windows Firewall rules to block all inbound and outbound traffic to/from ${c.remote} (${c.app}).`,
-                                    `netsh advfirewall firewall add rule name="Netwatch Block ${c.remote}" dir=out action=block remoteip=${c.remote}`,
+                                    `netsh advfirewall firewall add rule name="FlowState Block ${c.remote}" dir=out action=block remoteip=${c.remote}`,
                                     true
                                   )}
                                 />
@@ -4548,7 +4600,7 @@ export default function NetMonitor() {
 
       {/* ── FOOTER ────────────────────────────────────────────────── */}
       <div style={{ padding: "8px 24px", borderTop: "1px solid rgba(56,189,248,0.06)", display: "flex", justifyContent: "space-between", fontSize: 9, color: "#475569", background: "#080c16" }}>
-        <span>NETWATCH v1.0 · Local Network Monitor</span>
+        <span>FLOWSTATE v1.0 · Local Network Monitor</span>
         <span>Backend: ws://localhost:8765 · Status: {wsStatus.toUpperCase()}</span>
       </div>
 

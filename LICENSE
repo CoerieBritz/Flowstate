@@ -1,4 +1,4 @@
-Netwatch - Local Network Monitor with SOAR
+FlowState - Local Network Monitor with SOAR
 Copyright (c) 2026 Coerie Britz. All rights reserved.
 
 This software is dual-licensed:
@@ -12,7 +12,7 @@ You may use, modify, and distribute this software under the terms of AGPL-3.0.
 Commercial Edition
 ==================
 A commercial license is available for businesses that want to:
-- Use Netwatch without AGPL-3.0 obligations
+- Use FlowState without AGPL-3.0 obligations
 - Deploy across multiple machines with central management
 - Access email/Slack/Teams alert notifications
 - Generate compliance and executive reports

@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 
 echo ============================================================
-echo  Netwatch - PyInstaller Backend Build
+echo  FlowState - PyInstaller Backend Build
 echo ============================================================
 echo.
 

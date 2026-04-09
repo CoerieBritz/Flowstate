@@ -24,17 +24,30 @@ fn spawn_backend(app: &AppHandle) -> Result<CommandChild, Box<dyn std::error::Er
     // The backend creates these itself too, but doing it here guarantees they
     // exist before the first WebSocket frame is processed.
     std::fs::create_dir_all(app_data_dir.join("data").join("snapshots"))?;
+    std::fs::create_dir_all(app_data_dir.join("soar").join("feeds"))?;
 
     let data_dir_str = app_data_dir.to_string_lossy().to_string();
+
+    // Log the sidecar path so we can debug if the binary is missing or misnamed.
+    println!("[Netwatch] Spawning sidecar 'netwatch-backend' with --data-dir: {data_dir_str}");
 
     // Spawn the PyInstaller-compiled backend as a Tauri sidecar.
     // The `--data-dir` flag overrides where the backend stores its DB,
     // settings.json, and other runtime files.
-    let (mut rx, child) = app
+    let spawn_result = app
         .shell()
         .sidecar("netwatch-backend")?
         .args(["--data-dir", &data_dir_str])
-        .spawn()?;
+        .spawn();
+
+    let (mut rx, child) = match spawn_result {
+        Ok(v) => v,
+        Err(e) => {
+            let log_path = app_data_dir.join("launch_error.log");
+            let _ = std::fs::write(&log_path, format!("Failed to spawn netwatch-backend: {e}\n"));
+            return Err(e.into());
+        }
+    };
 
     // Drain the backend's stdout/stderr in a background task so the pipe
     // buffer never fills up and blocks the backend process.

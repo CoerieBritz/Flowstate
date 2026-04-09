@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: ── Netwatch - Tauri Dev Mode ─────────────────────────────────────────────
+:: ── FlowState - Tauri Dev Mode ─────────────────────────────────────────────
 :: Starts the Tauri dev window (Vite dev server + Rust hot-reload).
 :: The Python backend is spawned automatically by the Tauri app on startup.
 ::
