@@ -44,8 +44,6 @@ py -m PyInstaller ^
     --hidden-import=psutil ^
     --hidden-import=yaml ^
     --hidden-import=sqlite3 ^
-    --hidden-import=aiohttp ^
-    --hidden-import=aiofiles ^
     --collect-all websockets ^
     --noconfirm ^
     netwatch_backend_win.py

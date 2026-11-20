@@ -12,6 +12,24 @@ use tauri_plugin_shell::{process::CommandChild, ShellExt};
 #[derive(Clone)]
 struct BackendState(std::sync::Arc<Mutex<Option<CommandChild>>>);
 
+/// Holds the WebSocket auth token generated at startup.
+struct TokenState(String);
+
+// ── Token generation ──────────────────────────────────────────────────────────
+
+fn generate_token() -> String {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    (0..16).map(|_| format!("{:02x}", rng.gen::<u8>())).collect()
+}
+
+// ── Tauri command ─────────────────────────────────────────────────────────────
+
+#[tauri::command]
+fn get_ws_token(state: tauri::State<TokenState>) -> String {
+    state.0.clone()
+}
+
 // ── Backend lifecycle ─────────────────────────────────────────────────────────
 
 fn log_to_file(log_path: &std::path::Path, msg: &str) {
@@ -21,7 +39,7 @@ fn log_to_file(log_path: &std::path::Path, msg: &str) {
     println!("{msg}");
 }
 
-fn spawn_backend(app: &AppHandle) -> Result<CommandChild, Box<dyn std::error::Error>> {
+fn spawn_backend(app: &AppHandle, token: &str) -> Result<CommandChild, Box<dyn std::error::Error>> {
     // Resolve %APPDATA%\com.coerie.flowstate  (created automatically by Tauri)
     let app_data_dir = app
         .path()
@@ -31,8 +49,9 @@ fn spawn_backend(app: &AppHandle) -> Result<CommandChild, Box<dyn std::error::Er
     let log_path = app_data_dir.join("flowstate.log");
 
     // Ensure data subdirectories exist before the backend starts.
-    std::fs::create_dir_all(app_data_dir.join("data").join("snapshots"))?;
-    std::fs::create_dir_all(app_data_dir.join("soar").join("feeds"))?;
+    std::fs::create_dir_all(app_data_dir.join("snapshots"))?;
+    std::fs::create_dir_all(app_data_dir.join("feeds"))?;
+    std::fs::create_dir_all(app_data_dir.join("playbooks"))?;
 
     // Create a default settings.json if one does not already exist.
     let settings_path = app_data_dir.join("settings.json");
@@ -48,16 +67,16 @@ fn spawn_backend(app: &AppHandle) -> Result<CommandChild, Box<dyn std::error::Er
 
     let data_dir_str = app_data_dir.to_string_lossy().to_string();
 
-    // Resolve the sidecar binary path for logging (Tauri resolves the exact
-    // arch-suffixed name, so we log the logical name and the data-dir).
     log_to_file(&log_path, &format!("[FlowState] Sidecar binary : netwatch-backend"));
     log_to_file(&log_path, &format!("[FlowState] Data directory : {data_dir_str}"));
 
     // Spawn the PyInstaller-compiled backend as a Tauri sidecar.
+    // Pass the auth token so the backend can verify WebSocket clients.
     let spawn_result = app
         .shell()
         .sidecar("netwatch-backend")?
         .args(["--data-dir", &data_dir_str])
+        .env("FLOWSTATE_TOKEN", token)
         .spawn();
 
     let (mut rx, child) = match spawn_result {
@@ -74,27 +93,37 @@ fn spawn_backend(app: &AppHandle) -> Result<CommandChild, Box<dyn std::error::Er
 
     // Drain the backend's stdout/stderr in a background task so the pipe
     // buffer never fills up and blocks the backend process.
+    // Every line is also appended to flowstate.log with a timestamp.
+    let log_path2 = log_path.clone();
     tauri::async_runtime::spawn(async move {
         use tauri_plugin_shell::process::CommandEvent;
         while let Some(event) = rx.recv().await {
             match event {
                 CommandEvent::Stdout(line) => {
                     let msg = String::from_utf8_lossy(&line);
-                    println!("[netwatch-backend] {msg}");
+                    let ts  = chrono::Local::now().format("%Y-%m-%d %H:%M:%S");
+                    let entry = format!("[{ts}] [stdout] {msg}");
+                    log_to_file(&log_path2, &entry);
                 }
                 CommandEvent::Stderr(line) => {
                     let msg = String::from_utf8_lossy(&line);
-                    eprintln!("[netwatch-backend:err] {msg}");
+                    let ts  = chrono::Local::now().format("%Y-%m-%d %H:%M:%S");
+                    let entry = format!("[{ts}] [stderr] {msg}");
+                    log_to_file(&log_path2, &entry);
                 }
                 CommandEvent::Error(e) => {
-                    eprintln!("[netwatch-backend] spawn error: {e}");
+                    let ts = chrono::Local::now().format("%Y-%m-%d %H:%M:%S");
+                    let entry = format!("[{ts}] [error] spawn error: {e}");
+                    log_to_file(&log_path2, &entry);
                     break;
                 }
                 CommandEvent::Terminated(status) => {
-                    eprintln!(
-                        "[netwatch-backend] terminated — code: {:?}, signal: {:?}",
+                    let ts = chrono::Local::now().format("%Y-%m-%d %H:%M:%S");
+                    let entry = format!(
+                        "[{ts}] [terminated] code: {:?}, signal: {:?}",
                         status.code, status.signal
                     );
+                    log_to_file(&log_path2, &entry);
                     break;
                 }
                 _ => {}
@@ -110,15 +139,18 @@ fn spawn_backend(app: &AppHandle) -> Result<CommandChild, Box<dyn std::error::Er
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .invoke_handler(tauri::generate_handler![get_ws_token])
         .setup(|app| {
-            match spawn_backend(app.handle()) {
+            let token = generate_token();
+            app.manage(TokenState(token.clone()));
+            match spawn_backend(app.handle(), &token) {
                 Ok(child) => {
                     app.manage(BackendState(std::sync::Arc::new(Mutex::new(Some(child)))));
-                    println!("[Netwatch] Backend started successfully.");
+                    println!("[FlowState] Backend started successfully.");
                 }
                 Err(e) => {
-                    eprintln!("[Netwatch] ERROR: Failed to start backend: {e}");
-                    eprintln!("[Netwatch] The dashboard will load but network data will not be available.");
+                    eprintln!("[FlowState] ERROR: Failed to start backend: {e}");
+                    eprintln!("[FlowState] The dashboard will load but network data will not be available.");
                     // Still register state so the close handler won't panic.
                     app.manage(BackendState(std::sync::Arc::new(Mutex::new(None))));
                 }
@@ -130,11 +162,11 @@ fn main() {
                 let state = window.app_handle().state::<BackendState>().inner().clone();
                 let mut guard = state.0.lock().unwrap();
                 if let Some(child) = guard.take() {
-                    println!("[Netwatch] Shutting down backend...");
+                    println!("[FlowState] Shutting down backend...");
                     let _ = child.kill();
                 }
             }
         })
         .run(tauri::generate_context!())
-        .expect("error while running Netwatch");
+        .expect("error while running FlowState");
 }

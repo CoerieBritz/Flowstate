@@ -23,7 +23,10 @@ ALERT-ONLY-by-default: nothing runs without explicit confirm=True from the UI.
 
 from __future__ import annotations
 
+import ipaddress
 import json
+import os
+import re
 import subprocess
 import sys
 import time
@@ -37,12 +40,6 @@ from typing import Optional
 _WIN32 = sys.platform == "win32"
 _POPEN_FLAGS: dict = ({"creationflags": 0x08000000} if _WIN32 else {})
 
-# ── Data paths ────────────────────────────────────────────────────────
-_DATA_DIR       = Path(__file__).parent.parent / "data"
-_BLOCKLIST_PATH = _DATA_DIR / "blocklist.txt"
-_AUDIT_LOG_PATH = _DATA_DIR / "audit.log"
-_SNAPSHOTS_DIR  = _DATA_DIR / "snapshots"
-
 # ── Action names handled by ResponseEngine ────────────────────────────
 RESPONSE_ACTIONS = frozenset({
     "block_ip", "unblock_ip",
@@ -51,6 +48,85 @@ RESPONSE_ACTIONS = frozenset({
     "capture_snapshot",
     "undo_action",
 })
+
+
+# ── Critical process names ────────────────────────────────────────────
+_CRITICAL_PNAMES = frozenset({
+    "csrss.exe", "lsass.exe", "wininit.exe", "winlogon.exe",
+    "services.exe", "smss.exe", "svchost.exe", "system", "registry",
+    "lsaiso.exe", "dwm.exe", "fontdrvhost.exe", "secure system", "memory compression",
+})
+
+# ── IP validation helpers ─────────────────────────────────────────────
+
+def _get_local_gateway() -> str:
+    """Return the default gateway IP (Windows only), or '' if unavailable."""
+    if not _WIN32:
+        return ""
+    try:
+        r = subprocess.run(
+            ["route", "print", "0.0.0.0"],
+            capture_output=True, text=True, timeout=5, **_POPEN_FLAGS,
+        )
+        for line in r.stdout.splitlines():
+            parts = line.split()
+            if (len(parts) >= 3 and parts[0] == "0.0.0.0"
+                    and parts[1] == "0.0.0.0"
+                    and re.match(r"^\d+\.\d+\.\d+\.\d+$", parts[2])
+                    and parts[2] != "On-link"):
+                return parts[2]
+    except Exception:
+        pass
+    return ""
+
+
+def _validate_ip(ip: str) -> "str | None":
+    """
+    Validate that *ip* is a safe, routable public IP address.
+    Returns None if valid, or a human-readable error string if rejected.
+    """
+    if not ip:
+        return "No IP address provided"
+    if "/" in ip or " " in ip:
+        return f"'{ip}' is not a single IP address (CIDR ranges are not accepted)"
+    try:
+        addr = ipaddress.ip_address(ip)
+    except ValueError:
+        return f"'{ip}' is not a valid IP address"
+    if addr.is_loopback:
+        return f"{ip} is a loopback address and cannot be targeted"
+    if addr.is_private:
+        return f"{ip} is a private address and cannot be targeted"
+    if addr.is_link_local:
+        return f"{ip} is a link-local address and cannot be targeted"
+    if addr.is_multicast:
+        return f"{ip} is a multicast address and cannot be targeted"
+    if addr.is_unspecified:
+        return f"{ip} is an unspecified address (0.0.0.0) and cannot be targeted"
+    if not addr.is_global:  # catches remaining reserved/shared ranges, e.g. 100.64.0.0/10 CGNAT
+        return f"{ip} is not a public internet address and cannot be targeted"
+    gateway = _get_local_gateway()
+    if gateway and ip == gateway:
+        return f"{ip} is the local gateway and cannot be targeted"
+    return None     # Valid
+
+
+def _validate_removal_target(ip: str) -> "str | None":
+    """
+    Looser check for unblock / remove-from-blocklist.
+
+    Removing a block can never make the machine less reachable, so entries
+    that _validate_ip would now refuse (private IPs, CIDR ranges created by
+    older versions) must still be removable.  Only require that the value is
+    a syntactically valid IP address or network, with no stray whitespace.
+    """
+    if not ip:
+        return "No IP address provided"
+    try:
+        ipaddress.ip_network(ip, strict=False)
+    except ValueError:
+        return f"'{ip}' is not a valid IP address or network"
+    return None
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -90,9 +166,13 @@ class ResponseEngine:
     MAX_AUDIT  = 200    # entries kept in memory
     MAX_UNDO   = 50     # undo stack depth
 
-    def __init__(self) -> None:
-        _DATA_DIR.mkdir(parents=True, exist_ok=True)
-        _SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+    def __init__(self, data_dir: Path) -> None:
+        self._data_dir       = data_dir
+        self._blocklist_path = data_dir / "blocklist.txt"
+        self._audit_log_path = data_dir / "audit.log"
+        self._snapshots_dir  = data_dir / "snapshots"
+        self._data_dir.mkdir(parents=True, exist_ok=True)
+        self._snapshots_dir.mkdir(parents=True, exist_ok=True)
 
         self._audit_log: list[dict] = []        # newest first
         self._undo_stack: list[UndoEntry] = []  # newest first
@@ -144,13 +224,13 @@ class ResponseEngine:
     # ── Action: block IP ─────────────────────────────────────────────
 
     def _block_ip(self, ip: str) -> dict:
-        if not ip:
-            return {"success": False, "action": "block_ip",
-                    "error": "No IP address provided"}
+        err = _validate_ip(ip)
+        if err:
+            return {"success": False, "action": "block_ip", "error": err}
 
         errors: list[str] = []
         for direction in ("out", "in"):
-            rule_name = f"Netwatch Block {direction.upper()} {ip}"
+            rule_name = f"FlowState Block {direction.upper()} {ip}"
             try:
                 r = subprocess.run(
                     ["netsh", "advfirewall", "firewall", "add", "rule",
@@ -199,25 +279,29 @@ class ResponseEngine:
     # ── Action: unblock IP ────────────────────────────────────────────
 
     def _unblock_ip(self, ip: str) -> dict:
-        if not ip:
-            return {"success": False, "action": "unblock_ip",
-                    "error": "No IP address provided"}
+        err = _validate_removal_target(ip)
+        if err:
+            return {"success": False, "action": "unblock_ip", "error": err}
 
         errors: list[str] = []
+        # Try both current "FlowState Block" and legacy "Netwatch Block" rule names
         for direction in ("OUT", "IN"):
-            rule_name = f"Netwatch Block {direction} {ip}"
-            try:
-                r = subprocess.run(
-                    ["netsh", "advfirewall", "firewall", "delete", "rule",
-                     f"name={rule_name}"],
-                    capture_output=True, text=True, timeout=15, **_POPEN_FLAGS,
-                )
-                # netsh may return 0 even when no rule matched; check stdout
-                out = r.stdout.strip()
-                if r.returncode != 0 and "No rules match" not in out:
-                    errors.append(f"{direction}: {r.stderr.strip() or out or 'error'}")
-            except Exception as exc:
-                errors.append(f"{direction}: {exc}")
+            for prefix in ("FlowState Block", "Netwatch Block"):
+                rule_name = f"{prefix} {direction} {ip}"
+                try:
+                    r = subprocess.run(
+                        ["netsh", "advfirewall", "firewall", "delete", "rule",
+                         f"name={rule_name}"],
+                        capture_output=True, text=True, timeout=15, **_POPEN_FLAGS,
+                    )
+                    # netsh may return 0 even when no rule matched; check stdout
+                    out = r.stdout.strip()
+                    if r.returncode != 0 and "No rules match" not in out:
+                        errors.append(
+                            f"{direction}/{prefix}: {r.stderr.strip() or out or 'error'}"
+                        )
+                except Exception as exc:
+                    errors.append(f"{direction}/{prefix}: {exc}")
 
         success = len(errors) == 0
         details = (
@@ -252,6 +336,41 @@ class ResponseEngine:
             return {"success": False, "action": "kill_process",
                     "error": "No PID provided"}
 
+        # Guard: reject protected PIDs
+        if pid in (0, 4):
+            return {"success": False, "action": "kill_process",
+                    "error": f"PID {pid} is a protected system process and cannot be terminated"}
+
+        # Guard: reject the backend's own PID
+        if pid in (os.getpid(), os.getppid()):  # self + PyInstaller onefile bootloader
+            return {"success": False, "action": "kill_process",
+                    "error": "Refusing to terminate the backend's own process"}
+
+        # Guard: reject known critical process names (sent by client)
+        if name.lower() in _CRITICAL_PNAMES:
+            return {"success": False, "action": "kill_process",
+                    "error": f"'{name}' is a critical system process and cannot be terminated"}
+
+        # Verify the actual process name via psutil to guard against PID reuse
+        try:
+            import psutil as _psutil
+            actual_name = _psutil.Process(pid).name()
+        except Exception as exc:
+            return {"success": False, "action": "kill_process",
+                    "error": f"Cannot verify process for PID {pid}: {exc}"}
+
+        if actual_name.lower() != name.lower():
+            return {"success": False, "action": "kill_process",
+                    "error": (
+                        f"PID {pid} belongs to '{actual_name}', not '{name}' — "
+                        "refusing to kill (possible PID reuse)"
+                    )}
+
+        # Guard: reject critical actual name even if the client lied
+        if actual_name.lower() in _CRITICAL_PNAMES:
+            return {"success": False, "action": "kill_process",
+                    "error": f"'{actual_name}' is a critical system process and cannot be terminated"}
+
         try:
             r = subprocess.run(
                 ["taskkill", "/PID", str(pid), "/F"],
@@ -278,9 +397,9 @@ class ResponseEngine:
     # ── Action: add to blocklist ──────────────────────────────────────
 
     def _add_blocklist(self, ip: str) -> dict:
-        if not ip:
-            return {"success": False, "action": "add_blocklist",
-                    "error": "No IP provided"}
+        err = _validate_ip(ip)
+        if err:
+            return {"success": False, "action": "add_blocklist", "error": err}
 
         if ip in self._blocklist:
             details = f"{ip} already in blocklist"
@@ -306,11 +425,12 @@ class ResponseEngine:
     # ── Action: remove from blocklist ─────────────────────────────────
 
     def _remove_blocklist(self, ip: str) -> dict:
-        if not ip:
-            return {"success": False, "action": "remove_blocklist",
-                    "error": "No IP provided"}
-
+        # Anything already in the list may be removed, even entries the
+        # current validator would refuse to add (legacy private/CIDR entries).
         if ip not in self._blocklist:
+            err = _validate_removal_target(ip)
+            if err:
+                return {"success": False, "action": "remove_blocklist", "error": err}
             return {"success": False, "action": "remove_blocklist", "target": ip,
                     "error": f"{ip} not found in blocklist"}
 
@@ -370,9 +490,9 @@ class ResponseEngine:
         }
 
         filename = f"snapshot_{ts_str}.json"
-        path = _SNAPSHOTS_DIR / filename
+        path = self._snapshots_dir / filename
         try:
-            _SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+            self._snapshots_dir.mkdir(parents=True, exist_ok=True)
             with open(path, "w", encoding="utf-8") as fh:
                 json.dump(snapshot, fh, indent=2)
             details = (
@@ -412,26 +532,26 @@ class ResponseEngine:
     # ── Persistence ───────────────────────────────────────────────────
 
     def _load_blocklist(self) -> None:
-        if not _BLOCKLIST_PATH.exists():
+        if not self._blocklist_path.exists():
             return
-        with open(_BLOCKLIST_PATH, encoding="utf-8") as fh:
+        with open(self._blocklist_path, encoding="utf-8") as fh:
             for line in fh:
                 line = line.strip()
                 if line and not line.startswith("#"):
                     self._blocklist.append(line)
 
     def _save_blocklist(self) -> None:
-        _BLOCKLIST_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(_BLOCKLIST_PATH, "w", encoding="utf-8") as fh:
+        self._blocklist_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self._blocklist_path, "w", encoding="utf-8") as fh:
             fh.write("# Netwatch Persistent Blocklist\n")
             for ip in self._blocklist:
                 fh.write(f"{ip}\n")
 
     def _load_audit_log(self) -> None:
-        if not _AUDIT_LOG_PATH.exists():
+        if not self._audit_log_path.exists():
             return
         entries: list[dict] = []
-        with open(_AUDIT_LOG_PATH, encoding="utf-8") as fh:
+        with open(self._audit_log_path, encoding="utf-8") as fh:
             for line in fh:
                 line = line.strip()
                 if line:
@@ -464,8 +584,8 @@ class ResponseEngine:
         if len(self._audit_log) > self.MAX_AUDIT:
             self._audit_log = self._audit_log[: self.MAX_AUDIT]
 
-        _AUDIT_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(_AUDIT_LOG_PATH, "a", encoding="utf-8") as fh:
+        self._audit_log_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self._audit_log_path, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(entry) + "\n")
 
         icon = "✓" if success else "✗"

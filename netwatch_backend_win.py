@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import sys
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 """
 FLOWSTATE - Local Network Monitor Backend (Windows)
 ===================================================
@@ -37,14 +40,17 @@ These are sent in every WebSocket frame as:
 
 import argparse
 import asyncio
+import hmac
 import json
+import queue
 import re
+import secrets
 import subprocess
+import threading
 import time
 import socket
 import sqlite3
 import os
-import sys
 import signal
 import ctypes
 from collections import defaultdict
@@ -159,6 +165,41 @@ def _resolve_data_dir() -> Path:
 
 _DATA_DIR = _resolve_data_dir()
 _SETTINGS_PATH = _DATA_DIR / "settings.json"
+
+# ── WebSocket auth token ──────────────────────────────────────────────────────
+
+def _load_or_create_token() -> str:
+    """
+    Return the WebSocket auth token.
+    - Tauri mode : FLOWSTATE_TOKEN env var is set by the Rust launcher.
+    - Dev/PowerShell mode: generate a fresh token and write it to
+      data/ws_token.txt so the developer can set VITE_WS_TOKEN in
+      dashboard/.env.local.
+    """
+    token = os.environ.get("FLOWSTATE_TOKEN", "").strip()
+    if token:
+        print("[WS] Auth token loaded from FLOWSTATE_TOKEN environment variable")
+        return token
+    # Dev mode: generate and persist to data/ws_token.txt
+    token = secrets.token_hex(16)   # 32 hex characters
+    _DATA_DIR.mkdir(parents=True, exist_ok=True)
+    token_path = _DATA_DIR / "ws_token.txt"
+    token_path.write_text(token, encoding="utf-8")
+    print(f"[WS] Dev mode — auth token written to {token_path}")
+    print(f"[WS] Add to dashboard/.env.local:  VITE_WS_TOKEN={token}")
+    return token
+
+_WS_TOKEN: str = _load_or_create_token()
+
+# ── WebSocket allowed origins ─────────────────────────────────────────────────
+
+_ALLOWED_ORIGINS = [
+    "tauri://localhost",
+    "http://tauri.localhost",
+    "https://tauri.localhost",
+    "http://localhost:5173",
+    None,   # Allow connections with no Origin header (native / dev-tools)
+]
 DB_PATH = _DATA_DIR / "history.db"
 
 # === SETTINGS ================================================================
@@ -248,20 +289,52 @@ _POPEN_FLAGS: dict = (
 
 
 # === DNS CACHE ===
-# socket.gethostbyaddr() can be very slow on Windows. Cache results
-# permanently for the lifetime of the process to keep poll() fast.
+# socket.gethostbyaddr() can take several seconds per IP on Windows, so it
+# never runs on the poll path. resolve_host() is non-blocking: it returns the
+# cached hostname, or the IP itself while a daemon worker resolves it.
+# Results are cached permanently for the lifetime of the process.
 _dns_cache: dict[str, str] = {}
+_dns_pending: set[str] = set()
+_dns_queue: "queue.Queue[str]" = queue.Queue()
+_dns_lock = threading.Lock()
+_dns_workers_started = False
+_DNS_WORKERS = 8
+
+
+def _dns_worker() -> None:
+    while True:
+        ip = _dns_queue.get()
+        try:
+            host = socket.gethostbyaddr(ip)[0]
+        except Exception:
+            host = ip
+        _dns_cache[ip] = host
+        with _dns_lock:
+            _dns_pending.discard(ip)
 
 
 def resolve_host(ip: str) -> str:
-    if ip in _dns_cache:
-        return _dns_cache[ip]
-    try:
-        host = socket.gethostbyaddr(ip)[0]
-    except Exception:
-        host = ip
-    _dns_cache[ip] = host
-    return host
+    """Return the cached hostname for *ip*, or *ip* itself until resolved."""
+    global _dns_workers_started
+    host = _dns_cache.get(ip)
+    if host is not None:
+        return host
+    with _dns_lock:
+        if ip in _dns_pending:
+            return ip
+        _dns_pending.add(ip)
+        if not _dns_workers_started:
+            for i in range(_DNS_WORKERS):
+                threading.Thread(target=_dns_worker, daemon=True,
+                                 name=f"rdns-{i}").start()
+            _dns_workers_started = True
+    _dns_queue.put(ip)
+    return ip
+
+
+def dns_resolved(ip: str) -> bool:
+    """True once a reverse lookup for *ip* has finished (success or failure)."""
+    return ip in _dns_cache
 
 
 # === ADMIN CHECK ===
@@ -451,6 +524,32 @@ def init_db() -> sqlite3.Connection:
     return conn
 
 
+def _needs_feed_update(feeds_dir: Path) -> bool:
+    """Return True if feeds are absent or any file is older than 24 h."""
+    files = list(feeds_dir.glob("*.txt")) + list(feeds_dir.glob("*.csv"))
+    if not files:
+        return True
+    threshold = time.time() - 86400
+    return any(f.stat().st_mtime < threshold for f in files)
+
+
+def _copy_bundled_playbooks(playbooks_dir: Path) -> None:
+    """Copy bundled default playbooks into playbooks_dir on first run."""
+    import shutil
+    if getattr(sys, "frozen", False):
+        src = Path(sys._MEIPASS) / "playbooks"      # type: ignore[attr-defined]
+    else:
+        src = Path(__file__).parent / "playbooks"
+    if not src.exists():
+        print(f"[PB] Bundled playbooks source not found: {src}")
+        return
+    for yml in src.glob("*.yml"):
+        dest = playbooks_dir / yml.name
+        if not dest.exists():
+            shutil.copy2(yml, dest)
+            print(f"[PB] Copied bundled playbook: {yml.name}")
+
+
 # === NETWORK MONITOR =========================================================
 
 class NetworkMonitor:
@@ -472,25 +571,48 @@ class NetworkMonitor:
         self._prev_time = time.time()
 
         # ── Network topology (refreshed every ARP_SCAN_INTERVAL seconds) ──
-        self._last_arp_scan: float = 0.0   # epoch of last scan
-        self._local_ip: str = get_local_ip()
-        self._gateway: str = get_gateway()
+        # Gateway lookup (route print) and the ARP scan run in a background
+        # thread so the first poll is not delayed; the payload carries
+        # empty values until the first scan finishes.
+        self._last_arp_scan: float = 0.0   # epoch of last scan start
+        self._local_ip: str = get_local_ip()   # UDP socket trick, no I/O wait
+        self._gateway: str = ""
         self._lan_devices: list[dict] = []
+        self._topology_running = False
+        self._topology_lock = threading.Lock()
 
-        # Kick off the first ARP scan immediately
-        self._refresh_topology()
+        # Kick off the first topology scan immediately (background)
+        self._start_topology_refresh()
 
         # ── Threat Intel Engine ───────────────────────────────────────────
-        # Loads blocklists from soar/feeds/ on startup.
+        # Loads blocklists from <data-dir>/feeds/ on startup.
         # ALERT-ONLY: never modifies firewall rules or blocks traffic.
-        self._threat_intel: "ThreatIntelEngine | None" = None
-        if _THREAT_INTEL_AVAILABLE:
-            feeds_dir = Path(__file__).parent / "soar" / "feeds"
-            self._threat_intel = ThreatIntelEngine(feeds_dir)
-
+        #
+        # The engine and its per-IP result cache are always swapped together
+        # under _ti_lock (see _reload_threat_intel); poll() snapshots both
+        # under the same lock, so a reload never exposes a half-loaded engine
+        # or clears the cache under poll()'s feet.
+        self._ti_lock = threading.Lock()          # guards the engine/cache pair
+        self._ti_reload_lock = threading.Lock()   # serialises reloads
+        self._feeds_dir: "Path | None" = None
         # Per-IP lookup cache: avoids re-checking the same remote IP every second.
         # Maps ip_str → ThreatMatch.to_dict() or None.
         self._threat_cache: dict[str, dict | None] = {}
+        self._threat_intel: "ThreatIntelEngine | None" = None
+        if _THREAT_INTEL_AVAILABLE:
+            feeds_dir = _DATA_DIR / "feeds"
+            feeds_dir.mkdir(parents=True, exist_ok=True)
+            self._feeds_dir = feeds_dir
+            self._threat_intel = ThreatIntelEngine(feeds_dir)
+            # Start background feed update if feeds are missing or stale
+            if _needs_feed_update(feeds_dir):
+                threading.Thread(
+                    target=self._background_feed_update,
+                    args=(feeds_dir,),
+                    daemon=True,
+                    name="feed-updater",
+                ).start()
+
         # IPs for which we have already raised a threat alert this session
         # (prevents duplicate alerts flooding the feed).
         self._alerted_threat_ips: set[str] = set()
@@ -510,7 +632,7 @@ class NetworkMonitor:
         # Nothing runs without confirm=True from the dashboard.
         self._responder: "ResponseEngine | None" = None
         if _RESPONDER_AVAILABLE:
-            self._responder = ResponseEngine()
+            self._responder = ResponseEngine(_DATA_DIR)
 
         # ── Phase 4: External Threat Intel API ───────────────────────
         # VirusTotal + AbuseIPDB lookups with SQLite caching.
@@ -519,6 +641,7 @@ class NetworkMonitor:
         if _TI_API_AVAILABLE:
             ti_cfg = self._settings.get("threat_intel", {})
             self._ti_api = ThreatIntelAPI(
+                data_dir       = _DATA_DIR,
                 vt_key         = ti_cfg.get("virustotal_api_key", ""),
                 ab_key         = ti_cfg.get("abuseipdb_api_key",  ""),
                 cache_ttl_hours= float(ti_cfg.get("cache_ttl_hours", 24)),
@@ -533,20 +656,67 @@ class NetworkMonitor:
         # ALERT-ONLY: never executes actions automatically.
         self._playbook_engine: "PlaybookEngine | None" = None
         if _PLAYBOOKS_AVAILABLE:
-            self._playbook_engine = PlaybookEngine()
+            playbooks_dir = _DATA_DIR / "playbooks"
+            playbooks_dir.mkdir(parents=True, exist_ok=True)
+            if not any(playbooks_dir.glob("*.yml")):
+                _copy_bundled_playbooks(playbooks_dir)
+            self._playbook_engine = PlaybookEngine(playbooks_dir)
             print(f"[PB] Playbook engine ready — {len(self._playbook_engine.playbooks)} playbook(s)")
 
     # ── Internal helpers ──────────────────────────────────────────────
 
+    def _start_topology_refresh(self) -> None:
+        """Start a background topology scan unless one is already running."""
+        with self._topology_lock:
+            if self._topology_running:
+                return
+            self._topology_running = True
+            self._last_arp_scan = time.time()
+        threading.Thread(target=self._refresh_topology, daemon=True,
+                         name="topology").start()
+
     def _refresh_topology(self) -> None:
-        """Re-detect gateway, local IP, and ARP table. Call every 30 s."""
-        self._local_ip = get_local_ip()
-        self._gateway = get_gateway()
-        self._lan_devices = scan_arp(self._gateway, self._local_ip)
-        self._last_arp_scan = time.time()
-        n = len(self._lan_devices)
-        gw = self._gateway or "(unknown)"
-        print(f"[NET] Gateway={gw}  LocalIP={self._local_ip}  LAN devices={n}")
+        """Re-detect gateway, local IP, and ARP table (background thread)."""
+        try:
+            local_ip = get_local_ip()
+            gateway = get_gateway()
+            devices = scan_arp(gateway, local_ip)
+            # Plain attribute rebinds: poll() always sees a complete value.
+            self._local_ip = local_ip
+            self._gateway = gateway
+            self._lan_devices = devices
+            gw = gateway or "(unknown)"
+            print(f"[NET] Gateway={gw}  LocalIP={local_ip}  LAN devices={len(devices)}")
+        except Exception as exc:
+            print(f"[NET] Topology refresh failed: {exc}")
+        finally:
+            with self._topology_lock:
+                self._topology_running = False
+
+    def _reload_threat_intel(self) -> None:
+        """
+        Build a fresh ThreatIntelEngine from disk, then swap it in together
+        with an empty result cache. The old engine keeps serving lookups
+        until the swap, so there is never a half-loaded window.
+        """
+        if self._feeds_dir is None or ThreatIntelEngine is None:
+            return
+        with self._ti_reload_lock:
+            new_engine = ThreatIntelEngine(self._feeds_dir)
+            with self._ti_lock:
+                self._threat_intel = new_engine
+                self._threat_cache = {}
+
+    def _background_feed_update(self, feeds_dir: Path) -> None:
+        """Download threat feeds in a background thread; reload engine when done."""
+        try:
+            from soar.feed_updater import update_all_feeds
+            print("[FEEDS] Starting background feed update...")
+            update_all_feeds(feeds_dir, verbose=True)
+            self._reload_threat_intel()
+            print("[FEEDS] Threat intel engine reloaded after background update")
+        except Exception as exc:
+            print(f"[FEEDS] Background update failed: {exc}")
 
     def _proc_name(self, pid) -> str:
         """Return process name for pid, or 'unknown' on access errors."""
@@ -688,9 +858,19 @@ class NetworkMonitor:
         new_alerts: list[dict] = []
         new_apps_this_poll: set[str] = set()   # for correlator Rule 5
 
-        # Refresh ARP table every ARP_SCAN_INTERVAL seconds
+        # Refresh gateway/ARP every ARP_SCAN_INTERVAL seconds (background)
         if now - self._last_arp_scan >= ARP_SCAN_INTERVAL:
-            self._refresh_topology()
+            self._start_topology_refresh()
+
+        # Fill in LAN device hostnames as background reverse lookups finish
+        # (scan_arp shows the IP until then).
+        for dev in self._lan_devices:
+            if dev["hostname"] == dev["ip"]:
+                host = _dns_cache.get(dev["ip"])
+                if host and host != dev["ip"]:
+                    dev["hostname"] = host
+                    dev["type"] = _classify_device(
+                        dev["ip"], host, self._gateway, self._local_ip)
 
         # ── System-level bandwidth delta ──────────────────────────────
         curr_io = psutil.net_io_counters()
@@ -745,11 +925,14 @@ class NetworkMonitor:
         for conn in all_connections:
             ip = conn.get("remote", "")
             if ip and ip not in ("N/A", ""):
-                if ip not in self._geo_cache:
-                    self._geo_cache[ip] = self._geo_from_hostname(
-                        conn.get("host", ""), ip
-                    )
-                lat, lon, cc = self._geo_cache[ip]
+                geo = self._geo_cache.get(ip)
+                if geo is None:
+                    geo = self._geo_from_hostname(conn.get("host", ""), ip)
+                    # Only cache once reverse DNS has finished, so the
+                    # hostname-based hint is computed from the real name.
+                    if dns_resolved(ip):
+                        self._geo_cache[ip] = geo
+                lat, lon, cc = geo
                 if lat is not None:
                     conn["lat"] = lat
                     conn["lon"] = lon
@@ -802,15 +985,21 @@ class NetworkMonitor:
         # ALERT-ONLY: this section only reads data and appends alerts.
         # It does not call block_app(), modify iptables, or execute anything.
         threat_hits: list[dict] = []
-        if self._threat_intel:
+        # Snapshot the engine/cache pair so a concurrent reload (feed update,
+        # settings save, refresh_feeds) cannot swap or clear it mid-loop.
+        with self._ti_lock:
+            ti_engine, threat_cache = self._threat_intel, self._threat_cache
+        if ti_engine:
             for conn in all_connections:
                 ip = conn.get("remote", "")
                 if not ip or ip == "N/A":
                     continue
                 # Cache miss: run the lookup (expensive only on first encounter)
-                if ip not in self._threat_cache:
-                    self._threat_cache[ip] = self._threat_intel.check_connection(conn)
-                threat = self._threat_cache[ip]
+                if ip in threat_cache:
+                    threat = threat_cache[ip]
+                else:
+                    threat = ti_engine.check_connection(conn)
+                    threat_cache[ip] = threat
                 if threat:
                     # Annotate the connection dict so the dashboard can badge it
                     conn["threat"] = threat
@@ -1018,11 +1207,10 @@ class NetworkMonitor:
             _write_settings(updated)
             self._settings = updated
             self._apply_settings()
-            # Clear threat cache so new keys take effect immediately
-            self._threat_cache.clear()
-            # Reload feed data with fresh engine (picks up any key changes)
+            # Reload feed data with a fresh engine and empty threat cache
+            # (atomic swap — safe while poll() is running)
             if self._threat_intel:
-                self._threat_intel.load_all()
+                self._reload_threat_intel()
             # Refresh external API keys and clear session memo
             if self._ti_api:
                 ti = updated.get("threat_intel", {})
@@ -1045,8 +1233,7 @@ class NetworkMonitor:
             return {"type": "action_result", "action": "refresh_feeds",
                     "success": False, "error": "Threat intel engine not loaded."}
         try:
-            self._threat_intel.load_all()
-            self._threat_cache.clear()
+            self._reload_threat_intel()
             stats = self._threat_intel.stats()
             return {"type": "action_result", "action": "refresh_feeds",
                     "success": True,
@@ -1075,6 +1262,32 @@ class NetworkMonitor:
 # === WEBSOCKET SERVER ========================================================
 
 async def ws_handler(monitor: NetworkMonitor, websocket):
+    # ── Authentication ─────────────────────────────────────────────────────────
+    # The first message must be {"action": "auth", "token": "<token>"}.
+    # Any other first message, wrong token, or timeout closes with 4401.
+    try:
+        raw_first = await asyncio.wait_for(websocket.recv(), timeout=10.0)
+        first_msg = json.loads(raw_first)
+        token_ok = hmac.compare_digest(
+            str(first_msg.get("token", "")).encode("utf-8"),
+            _WS_TOKEN.encode("utf-8"),
+        )
+        if first_msg.get("action") != "auth" or not token_ok:
+            try:
+                await websocket.close(4401, "Unauthorized")
+            except Exception:
+                pass
+            return
+    except (asyncio.TimeoutError, json.JSONDecodeError):
+        try:
+            await websocket.close(4401, "Unauthorized")
+        except Exception:
+            pass
+        return
+    except Exception:
+        # Connection already closed before we could read
+        return
+
     monitor.ws_clients.add(websocket)
     print(f"[WS] Dashboard connected  ({len(monitor.ws_clients)} client(s))")
     try:
@@ -1360,6 +1573,7 @@ async def main():
         async with websockets.serve(
             lambda ws: ws_handler(monitor, ws),
             WS_HOST, WS_PORT,
+            origins=_ALLOWED_ORIGINS,
         ):
             await asyncio.gather(
                 broadcast(monitor),

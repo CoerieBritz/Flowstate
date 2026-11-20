@@ -26,8 +26,6 @@ from collections import deque
 from pathlib import Path
 from typing import Optional
 
-_DB_PATH = Path(__file__).parent.parent / "data" / "history.db"
-
 # ── Rate-limit state (in-memory, reset on process restart) ────────────
 _VT_REQ_TIMES:       deque      = deque()   # epoch timestamps of recent VT calls
 _AB_REQ_COUNT:       int        = 0         # AbuseIPDB calls today
@@ -78,11 +76,11 @@ def _ensure_cache_table(db: sqlite3.Connection) -> None:
     db.commit()
 
 
-def _cache_get(ip: str, ttl_hours: float) -> Optional[dict]:
+def _cache_get(ip: str, ttl_hours: float, db_path: Path) -> Optional[dict]:
     """Return the cached dict for *ip* if fresh, else None."""
     try:
-        _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-        db = sqlite3.connect(str(_DB_PATH))
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        db = sqlite3.connect(str(db_path))
         _ensure_cache_table(db)
         row = db.execute(
             "SELECT cached_at, vt_result, ab_result FROM threat_cache WHERE ip = ?",
@@ -105,11 +103,11 @@ def _cache_get(ip: str, ttl_hours: float) -> Optional[dict]:
         return None
 
 
-def _cache_put(ip: str, vt: Optional[dict], ab: Optional[dict]) -> None:
+def _cache_put(ip: str, vt: Optional[dict], ab: Optional[dict], db_path: Path) -> None:
     """Upsert lookup results into the cache table."""
     try:
-        _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-        db = sqlite3.connect(str(_DB_PATH))
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        db = sqlite3.connect(str(db_path))
         _ensure_cache_table(db)
         db.execute(
             "INSERT OR REPLACE INTO threat_cache (ip, cached_at, vt_result, ab_result) "
@@ -257,10 +255,12 @@ class ThreatIntelAPI:
 
     def __init__(
         self,
+        data_dir: Path,
         vt_key: str = "",
         ab_key: str = "",
         cache_ttl_hours: float = 24.0,
     ) -> None:
+        self._db_path        = data_dir / "history.db"
         self.vt              = VirusTotalLookup(vt_key)
         self.ab              = AbuseIPDBLookup(ab_key)
         self.cache_ttl_hours = cache_ttl_hours
@@ -288,7 +288,7 @@ class ThreatIntelAPI:
             return self._memo[ip]
 
         # DB cache hit
-        cached = _cache_get(ip, self.cache_ttl_hours)
+        cached = _cache_get(ip, self.cache_ttl_hours, self._db_path)
         if cached is not None:
             result = {**cached, "risk_score": self._risk_score(cached)}
             self._memo[ip] = result
@@ -300,7 +300,7 @@ class ThreatIntelAPI:
 
         # Persist to DB only when at least one provider returned data
         if vt_result is not None or ab_result is not None:
-            _cache_put(ip, vt_result, ab_result)
+            _cache_put(ip, vt_result, ab_result, self._db_path)
 
         result: dict = {
             "ip":        ip,
@@ -317,7 +317,7 @@ class ThreatIntelAPI:
         """Return cached result without making any API calls."""
         if ip in self._memo:
             return self._memo[ip]
-        cached = _cache_get(ip, self.cache_ttl_hours)
+        cached = _cache_get(ip, self.cache_ttl_hours, self._db_path)
         if cached is not None:
             result = {**cached, "risk_score": self._risk_score(cached)}
             self._memo[ip] = result

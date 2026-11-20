@@ -218,9 +218,8 @@ class PlaybookEngine:
     broadcast loop.
     """
 
-    _PLAYBOOKS_DIR = Path(__file__).parent.parent / "playbooks"
-
-    def __init__(self) -> None:
+    def __init__(self, playbooks_dir: Path) -> None:
+        self._playbooks_dir = playbooks_dir
         self.playbooks: list[Playbook] = []
         # (playbook_name, key) → incident_id
         self._active_keys: dict[tuple[str, str], str] = {}
@@ -236,9 +235,9 @@ class PlaybookEngine:
 
     def _load_all(self) -> None:
         """(Re)load all playbook YAML files from ./playbooks/."""
-        self._PLAYBOOKS_DIR.mkdir(parents=True, exist_ok=True)
+        self._playbooks_dir.mkdir(parents=True, exist_ok=True)
         self.playbooks.clear()
-        for yml in sorted(self._PLAYBOOKS_DIR.glob("*.yml")):
+        for yml in sorted(self._playbooks_dir.glob("*.yml")):
             try:
                 data = _load_yaml(yml)
                 pb   = Playbook(data, yml)
@@ -249,7 +248,7 @@ class PlaybookEngine:
                 print(f"[PB] Failed to load {yml.name}: {exc}")
 
         if not self.playbooks:
-            print(f"[PB] No playbooks found in {self._PLAYBOOKS_DIR}")
+            print(f"[PB] No playbooks found in {self._playbooks_dir}")
 
     def reload(self) -> None:
         self._load_all()
@@ -427,7 +426,7 @@ class PlaybookEngine:
         import re as _re
         if not _re.match(r'^[a-zA-Z0-9_\-]+\.yml$', filename):
             return {"success": False, "error": "Invalid filename — use letters, numbers, underscores, hyphens only"}
-        path = self._PLAYBOOKS_DIR / filename
+        path = self._playbooks_dir / filename
         try:
             path.write_text(yaml_content, encoding="utf-8")
             self._load_all()
