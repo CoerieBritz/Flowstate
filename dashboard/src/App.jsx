@@ -14,86 +14,10 @@ import {
   LineChart, Line, BarChart, Bar, AreaChart, Area,
   XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
-
-const WS_URL = "ws://localhost:8765";
-
-// ── App icon mapping ──────────────────────────────────────────────────
-function getAppIcon(name) {
-  const n = name.toLowerCase();
-  if (n.includes("chrome") || n.includes("firefox") || n.includes("edge") || n.includes("safari") || n.includes("brave") || n.includes("opera")) return "🌐";
-  if (n.includes("spotify")) return "🎵";
-  if (n.includes("discord")) return "💬";
-  if (n.includes("code") || n.includes("vscode") || n.includes("cursor")) return "📝";
-  if (n.includes("steam")) return "🎮";
-  if (n.includes("slack")) return "📨";
-  if (n.includes("outlook") || n.includes("thunderbird") || n.includes("mail")) return "📧";
-  if (n.includes("node") || n.includes("python") || n.includes("java") || n.includes("ruby")) return "⚙️";
-  if (n.includes("zoom") || n.includes("teams") || n.includes("meet") || n.includes("webex")) return "📹";
-  if (n.includes("docker")) return "🐳";
-  if (n.includes("git")) return "🔀";
-  if (n.includes("ssh") || n.includes("curl") || n.includes("wget")) return "🔐";
-  if (n.includes("torrent") || n.includes("transmission") || n.includes("qbittorrent")) return "📡";
-  return "💻";
-}
-
-function formatBytes(b) {
-  if (b < 1024) return b.toFixed(0) + " B";
-  if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
-  if (b < 1073741824) return (b / 1048576).toFixed(1) + " MB";
-  return (b / 1073741824).toFixed(2) + " GB";
-}
-function formatRate(b) {
-  if (b < 1024)    return b.toFixed(0) + " B/s";
-  if (b < 1048576) return (b / 1024).toFixed(1) + " KB/s";
-  return (b / 1048576).toFixed(2) + " MB/s";
-}
-// Returns { main, sub } for the two-line rate display on stat cards
-function formatRateDetailed(b) {
-  if (b < 1024)    return { main: b.toFixed(0) + " B/s",         sub: null };
-  if (b < 1048576) return { main: (b / 1024).toFixed(1) + " KB/s", sub: Math.round(b).toLocaleString() + " B/s" };
-  return {
-    main: (b / 1048576).toFixed(2) + " MB/s",
-    sub:  (b / 1024).toFixed(1) + " KB/s",
-  };
-}
-
-const PALETTE = [
-  "#38bdf8","#fb923c","#a78bfa","#4ade80","#f472b6",
-  "#34d399","#fbbf24","#60a5fa","#e879f9","#2dd4bf",
-  "#0ea5e9","#f97316","#8b5cf6","#22c55e","#ec4899",
-  "#10b981","#f59e0b","#3b82f6","#d946ef","#14b8a6",
-];
-
-// ── Responsive-width hook ─────────────────────────────────────────────
-function useContainerWidth(ref, fallback = 800) {
-  const [width, setWidth] = useState(fallback);
-  const nodeRef = useRef(null);
-  const roRef = useRef(null);
-
-  // Runs after every render, but only does work when the container
-  // element has actually changed (e.g. after switching tabs and back).
-  useEffect(() => {
-    const node = ref.current;
-    if (node === nodeRef.current) return;
-
-    if (roRef.current) roRef.current.disconnect();
-    roRef.current = null;
-    nodeRef.current = node;
-    if (!node) return;
-
-    const ro = new ResizeObserver((entries) => {
-      const w = Math.floor(entries[0].contentRect.width);
-      if (w > 0) setWidth(w); // ignore 0 when hidden/minimized/unmounting
-    });
-    ro.observe(node);
-    roRef.current = ro;
-  });
-
-  // Clean up when the component goes away
-  useEffect(() => () => roRef.current?.disconnect(), []);
-
-  return width;
-}
+import { useContainerWidth } from "./hooks/useContainerWidth";
+import { INC_SEV, PALETTE, riskColor, THREAT_COLORS } from "./lib/colors";
+import { fmtRelTime, formatBytes, formatRate, formatRateDetailed, getAppIcon } from "./lib/format";
+import { WS_URL } from "./lib/ws";
 
 // ── Trend badge ───────────────────────────────────────────────────────
 function TrendBadge({ history, field }) {
@@ -1746,13 +1670,6 @@ function NetworkMap({ gateway, localIp, lanDevices, connections, apps }) {
 // INCIDENTS TAB — SOAR Phase 2 alert correlation
 // ════════════════════════════════════════════════════════════════════
 
-const INC_SEV = {
-  CRITICAL: { color: "#ef4444", bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.35)",  pulse: true  },
-  HIGH:     { color: "#fb923c", bg: "rgba(251,146,60,0.12)", border: "rgba(251,146,60,0.35)", pulse: false },
-  MEDIUM:   { color: "#fbbf24", bg: "rgba(251,191,36,0.10)", border: "rgba(251,191,36,0.30)", pulse: false },
-  LOW:      { color: "#94a3b8", bg: "rgba(148,163,184,0.08)",border: "rgba(148,163,184,0.2)", pulse: false },
-};
-
 const RULE_LABELS = {
   R1: "Repeated Connection",
   R2: "Multi-Threat Contact",
@@ -1766,13 +1683,6 @@ const STATUS_STYLE = {
   ACKNOWLEDGED: { color: "#fbbf24", bg: "rgba(251,191,36,0.12)",   label: "ACKNOWLEDGED" },
   RESOLVED:     { color: "#4ade80", bg: "rgba(34,197,94,0.10)",    label: "RESOLVED"     },
 };
-
-function fmtRelTime(ts) {
-  const secs = Math.floor(Date.now() / 1000 - ts);
-  if (secs < 60)   return `${secs}s ago`;
-  if (secs < 3600) return `${Math.floor(secs / 60)}m ago`;
-  return `${Math.floor(secs / 3600)}h ago`;
-}
 
 function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
   const [expanded, setExpanded] = useState(false);
@@ -2099,14 +2009,6 @@ function IncidentsTab({ incidents, onAcknowledge, onResolve, onAction, apps }) {
 // PHASE 4 — THREAT INTEL PANEL + LOOKUP BUTTON
 // ════════════════════════════════════════════════════════════════════
 
-// Risk score → color/label
-function riskColor(score) {
-  if (score >= 70) return { color: "#ef4444", label: "CRITICAL", bg: "rgba(239,68,68,0.12)" };
-  if (score >= 40) return { color: "#fb923c", label: "HIGH",     bg: "rgba(251,146,60,0.10)" };
-  if (score >= 15) return { color: "#fbbf24", label: "MEDIUM",   bg: "rgba(251,191,36,0.10)" };
-  return           { color: "#4ade80",  label: "LOW",      bg: "rgba(34,197,94,0.08)"  };
-}
-
 // Small button used in the connections table action column
 function LookupBtn({ ip, loading, cached, onClick }) {
   return (
@@ -2270,12 +2172,6 @@ function TiRow({ label, value, valueColor, bold }) {
 // ════════════════════════════════════════════════════════════════════
 // THREAT BADGE — shown on connections flagged by threat intel
 // ════════════════════════════════════════════════════════════════════
-const THREAT_COLORS = {
-  high:   { bg: "rgba(239,68,68,0.15)",   text: "#ef4444", border: "rgba(239,68,68,0.35)"   },
-  medium: { bg: "rgba(251,146,60,0.15)",  text: "#fb923c", border: "rgba(251,146,60,0.35)"  },
-  low:    { bg: "rgba(251,191,36,0.12)",  text: "#fbbf24", border: "rgba(251,191,36,0.30)"  },
-};
-
 function ThreatBadge({ threat, compact = false }) {
   const c = THREAT_COLORS[threat.severity] || THREAT_COLORS.high;
   // Shorten long feed names for the badge label
