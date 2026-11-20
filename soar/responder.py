@@ -57,6 +57,11 @@ _CRITICAL_PNAMES = frozenset({
     "lsaiso.exe", "dwm.exe", "fontdrvhost.exe", "secure system", "memory compression",
 })
 
+# ── FlowState's own app process names ─────────────────────────────────
+# FlowState.exe = installed Tauri app (productName); netwatch.exe = the
+# Cargo binary name used by `tauri dev` / unbundled builds.
+_APP_PNAMES = frozenset({"flowstate.exe", "netwatch.exe"})
+
 # ── IP validation helpers ─────────────────────────────────────────────
 
 def _get_local_gateway() -> str:
@@ -370,6 +375,20 @@ class ResponseEngine:
         if actual_name.lower() in _CRITICAL_PNAMES:
             return {"success": False, "action": "kill_process",
                     "error": f"'{actual_name}' is a critical system process and cannot be terminated"}
+
+        # Guard: reject FlowState's own app process, by name and by ancestry.
+        # The ancestor chain covers the PyInstaller bootloader and the Tauri
+        # host whatever its exe is called.
+        if actual_name.lower() in _APP_PNAMES:
+            return {"success": False, "action": "kill_process",
+                    "error": f"'{actual_name}' is the FlowState app and cannot be terminated from itself"}
+        try:
+            ancestors = {p.pid for p in _psutil.Process(os.getpid()).parents()}
+        except Exception:
+            ancestors = {os.getppid()}
+        if pid in ancestors:
+            return {"success": False, "action": "kill_process",
+                    "error": f"PID {pid} ('{actual_name}') is a parent of the FlowState backend and cannot be terminated"}
 
         try:
             r = subprocess.run(

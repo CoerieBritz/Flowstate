@@ -3717,6 +3717,20 @@ function SaveRow({ onSave, wsReady, saving }) {
 // ════════════════════════════════════════════════════════════════════
 function StatusBanner({ status }) {
   if (status === "connected") return null;
+  if (status === "auth_failed") {
+    return (
+      <div role="alert" style={{
+        padding: "8px 24px", fontSize: 11,
+        background: "rgba(239,68,68,0.15)",
+        borderBottom: "1px solid rgba(239,68,68,0.45)",
+        color: "#ef4444", fontWeight: 600,
+        display: "flex", alignItems: "center", gap: 8,
+      }}>
+        <span>⛔</span>
+        Authentication failed — restart FlowState
+      </div>
+    );
+  }
   const isConnecting = status === "connecting";
   return (
     <div style={{
@@ -3791,7 +3805,7 @@ export default function NetMonitor() {
       ws = new WebSocket(WS_URL);
       wsRef.current = ws;
       ws.onopen = async () => {
-        setWsStatus("connected");
+        // Stay "connecting" until the backend replies with auth_ok.
         // Obtain auth token. Inside Tauri it always comes from the Rust side.
         // VITE_WS_TOKEN is only read in the Vite dev server outside Tauri;
         // the import.meta.env.DEV guard lets the production build drop it.
@@ -3805,12 +3819,19 @@ export default function NetMonitor() {
         } else if (import.meta.env.DEV) {
           token = import.meta.env.VITE_WS_TOKEN || "";
         }
+        if (ws.readyState !== WebSocket.OPEN) return;   // closed during invoke
         ws.send(JSON.stringify({ action: "auth", token }));
         ws.send(JSON.stringify({ action: "get_settings" }));
       };
 
       ws.onmessage = ({ data: raw }) => {
         const data = JSON.parse(raw);
+
+        // ── Auth confirmation ─────────────────────────────────────────
+        if (data.type === "auth_ok") {
+          setWsStatus("connected");
+          return;
+        }
 
         // ── Settings responses ────────────────────────────────────────
         if (data.type === "settings_response") {
@@ -3902,7 +3923,17 @@ export default function NetMonitor() {
         }
       };
 
-      ws.onclose = () => { if (!dead) { setWsStatus("disconnected"); reconnectTimer = setTimeout(connect, 3000); } };
+      ws.onclose = (ev) => {
+        if (dead) return;
+        if (ev.code === 4401) {
+          // Wrong/missing token: retrying cannot succeed, so stop reconnecting.
+          dead = true;
+          setWsStatus("auth_failed");
+          return;
+        }
+        setWsStatus("disconnected");
+        reconnectTimer = setTimeout(connect, 3000);
+      };
       ws.onerror = () => ws.close();
     }
 
@@ -4018,7 +4049,7 @@ export default function NetMonitor() {
   const filteredConns = selectedApp ? connections.filter((c) => c.app === selectedApp) : connections;
   const severityColor = { info: "#38bdf8", warning: "#fbbf24", danger: "#ef4444" };
   const severityBg = { info: "rgba(56,189,248,0.1)", warning: "rgba(251,191,36,0.1)", danger: "rgba(239,68,68,0.1)" };
-  const wsStatusColor = { connecting: "#fbbf24", connected: "#22c55e", disconnected: "#ef4444" }[wsStatus];
+  const wsStatusColor = { connecting: "#fbbf24", connected: "#22c55e", disconnected: "#ef4444", auth_failed: "#ef4444" }[wsStatus];
 
   const threatCount = threats.length;
   const openIncidentCount = incidents.filter((i) => i.status === "OPEN").length;
@@ -4089,7 +4120,7 @@ export default function NetMonitor() {
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: wsStatusColor, boxShadow: `0 0 8px ${wsStatusColor}`, animation: wsStatus === "connected" ? "pulse 2s infinite" : "none" }} />
-            <div style={{ fontSize: 8, color: "#475569", letterSpacing: 0.5 }}>{wsStatus.toUpperCase()}</div>
+            <div style={{ fontSize: 8, color: "#475569", letterSpacing: 0.5 }}>{wsStatus.replace("_", " ").toUpperCase()}</div>
           </div>
         </div>
       </div>
@@ -4616,7 +4647,7 @@ export default function NetMonitor() {
       {/* ── FOOTER ────────────────────────────────────────────────── */}
       <div style={{ padding: "8px 24px", borderTop: "1px solid rgba(56,189,248,0.06)", display: "flex", justifyContent: "space-between", fontSize: 9, color: "#475569", background: "#080c16" }}>
         <span>FLOWSTATE v1.0 · Local Network Monitor</span>
-        <span>Backend: ws://localhost:8765 · Status: {wsStatus.toUpperCase()}</span>
+        <span>Backend: ws://localhost:8765 · Status: {wsStatus.replace("_", " ").toUpperCase()}</span>
       </div>
 
       {/* ── CONFIRMATION MODAL + TOASTS ───────────────────────────── */}

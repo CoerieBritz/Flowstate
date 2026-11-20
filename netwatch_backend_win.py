@@ -1288,6 +1288,13 @@ async def ws_handler(monitor: NetworkMonitor, websocket):
         # Connection already closed before we could read
         return
 
+    # Confirm auth before any broadcast frame, so the dashboard only shows
+    # "connected" once the token has actually been accepted.
+    try:
+        await websocket.send(json.dumps({"type": "auth_ok"}))
+    except Exception:
+        return
+
     monitor.ws_clients.add(websocket)
     print(f"[WS] Dashboard connected  ({len(monitor.ws_clients)} client(s))")
     try:
