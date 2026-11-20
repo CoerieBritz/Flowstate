@@ -1,16 +1,18 @@
 import { useState, useEffect, useRef } from "react";
-import { invoke, isTauri } from "@tauri-apps/api/core";
 import {
   LineChart, Line, BarChart, Bar, AreaChart, Area,
   XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
+import { AppFooter } from "./components/AppFooter";
+import { AppHeader } from "./components/AppHeader";
 import { ConfirmModal } from "./components/ConfirmModal";
+import { GlobalStyles } from "./components/GlobalStyles";
 import { StatusBanner } from "./components/StatusBanner";
 import { ThreatIntelPanel } from "./components/ThreatIntelPanel";
 import { ToastContainer } from "./components/ToastContainer";
 import { useContainerWidth } from "./hooks/useContainerWidth";
-import { formatBytes, getAppIcon } from "./lib/format";
-import { WS_URL } from "./lib/ws";
+import { getAppIcon } from "./lib/format";
+import { getWsToken, WS_URL } from "./lib/ws";
 import { AlertsTab } from "./tabs/AlertsTab";
 import { AnalyticsTab } from "./tabs/AnalyticsTab";
 import { AuditLogTab } from "./tabs/AuditTab";
@@ -81,19 +83,7 @@ export default function NetMonitor() {
       wsRef.current = ws;
       ws.onopen = async () => {
         // Stay "connecting" until the backend replies with auth_ok.
-        // Obtain auth token. Inside Tauri it always comes from the Rust side.
-        // VITE_WS_TOKEN is only read in the Vite dev server outside Tauri;
-        // the import.meta.env.DEV guard lets the production build drop it.
-        let token = "";
-        if (isTauri()) {
-          try {
-            token = await invoke("get_ws_token");
-          } catch (err) {
-            console.error("get_ws_token failed:", err);
-          }
-        } else if (import.meta.env.DEV) {
-          token = import.meta.env.VITE_WS_TOKEN || "";
-        }
+        const token = await getWsToken();
         if (ws.readyState !== WebSocket.OPEN) return;   // closed during invoke
         ws.send(JSON.stringify({ action: "auth", token }));
         ws.send(JSON.stringify({ action: "get_settings" }));
@@ -314,7 +304,6 @@ export default function NetMonitor() {
   };
 
 
-  const wsStatusColor = { connecting: "#fbbf24", connected: "#22c55e", disconnected: "#ef4444", auth_failed: "#ef4444" }[wsStatus];
 
   const threatCount = threats.length;
   const openIncidentCount = incidents.filter((i) => i.status === "OPEN").length;
@@ -337,29 +326,7 @@ export default function NetMonitor() {
     <div style={{ fontFamily: "'JetBrains Mono','Fira Code','SF Mono',monospace", background: "#060a12", color: "#e2e8f0", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
 
       {/* ── HEADER ────────────────────────────────────────────────── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", borderBottom: "1px solid rgba(56,189,248,0.1)", background: "linear-gradient(180deg,rgba(56,189,248,0.04) 0%,transparent 100%)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: "linear-gradient(135deg,#0ea5e9,#06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 900, color: "#0a0e17", boxShadow: "0 0 20px rgba(14,165,233,0.3)" }}>⚡</div>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: 1.5, color: "#38bdf8" }}>FLOWSTATE</div>
-            <div style={{ fontSize: 9, color: "#64748b", letterSpacing: 2 }}>LOCAL NETWORK MONITOR</div>
-          </div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 9, color: "#64748b", letterSpacing: 1 }}>TOTAL SESSION</div>
-            <div style={{ fontSize: 12 }}>
-              <span style={{ color: "#38bdf8" }}>↓ {formatBytes(totalRecv)}</span>
-              <span style={{ margin: "0 8px", color: "#334155" }}>|</span>
-              <span style={{ color: "#fb923c" }}>↑ {formatBytes(totalSent)}</span>
-            </div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: wsStatusColor, boxShadow: `0 0 8px ${wsStatusColor}`, animation: wsStatus === "connected" ? "pulse 2s infinite" : "none" }} />
-            <div style={{ fontSize: 8, color: "#475569", letterSpacing: 0.5 }}>{wsStatus.replace("_", " ").toUpperCase()}</div>
-          </div>
-        </div>
-      </div>
+      <AppHeader totalSent={totalSent} totalRecv={totalRecv} wsStatus={wsStatus} />
 
       <StatusBanner status={wsStatus} />
 
@@ -498,10 +465,7 @@ export default function NetMonitor() {
       </div>
 
       {/* ── FOOTER ────────────────────────────────────────────────── */}
-      <div style={{ padding: "8px 24px", borderTop: "1px solid rgba(56,189,248,0.06)", display: "flex", justifyContent: "space-between", fontSize: 9, color: "#475569", background: "#080c16" }}>
-        <span>FLOWSTATE v1.0 · Local Network Monitor</span>
-        <span>Backend: ws://localhost:8765 · Status: {wsStatus.replace("_", " ").toUpperCase()}</span>
-      </div>
+      <AppFooter wsStatus={wsStatus} />
 
       {/* ── CONFIRMATION MODAL + TOASTS ───────────────────────────── */}
       <ConfirmModal pending={pendingAction} onConfirm={confirmAction} onCancel={cancelAction} />
@@ -516,16 +480,7 @@ export default function NetMonitor() {
         />
       )}
 
-      <style>{`
-        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
-        @keyframes toastIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
-        @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
-        * { box-sizing: border-box; }
-        body { margin: 0; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.2); border-radius: 3px; }
-      `}</style>
+      <GlobalStyles />
     </div>
   );
 }
