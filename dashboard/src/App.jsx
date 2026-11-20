@@ -7,30 +7,22 @@ import {
 import { ActionBtn } from "./components/ActionBtn";
 import { ConfirmModal } from "./components/ConfirmModal";
 import { LookupBtn } from "./components/LookupBtn";
-import { SectionHeader } from "./components/SectionHeader";
 import { StatusBanner } from "./components/StatusBanner";
 import { ThreatBadge } from "./components/ThreatBadge";
 import { ThreatIntelPanel } from "./components/ThreatIntelPanel";
 import { ToastContainer } from "./components/ToastContainer";
 import { useContainerWidth } from "./hooks/useContainerWidth";
-import { PALETTE, riskColor } from "./lib/colors";
-import { formatBytes, formatRate, formatRateDetailed, getAppIcon } from "./lib/format";
+import { riskColor } from "./lib/colors";
+import { formatBytes, formatRate, getAppIcon } from "./lib/format";
 import { WS_URL } from "./lib/ws";
+import { AnalyticsTab } from "./tabs/AnalyticsTab";
 import { AuditLogTab } from "./tabs/AuditTab";
 import { IncidentsTab } from "./tabs/IncidentsTab";
 import { PlaybooksTab } from "./tabs/PlaybooksTab";
 import { SettingsTab } from "./tabs/SettingsTab";
-import { AnalyticsSummary } from "./components/charts/AnalyticsSummary";
-import { AppBandwidthBarsWithDrillIn } from "./components/charts/AppBandwidthBarsWithDrillIn";
-import { ConnectionsTable } from "./components/charts/ConnectionsTable";
-import { DonutChart } from "./components/charts/DonutChart";
-import { GlobalConnectionMap } from "./components/charts/GlobalConnectionMap";
+import { TrafficTab } from "./tabs/TrafficTab";
 import { NetworkMap } from "./components/charts/NetworkMap";
-import { SankeyChart } from "./components/charts/SankeyChart";
 import { Sparkline } from "./components/charts/Sparkline";
-import { TrafficGraph } from "./components/charts/TrafficGraph";
-import { TreemapChart } from "./components/charts/TreemapChart";
-import { TrendBadge } from "./components/charts/TrendBadge";
 
 // ════════════════════════════════════════════════════════════════════
 // MAIN APP
@@ -323,12 +315,6 @@ export default function NetMonitor() {
     wsRef.current.send(JSON.stringify({ action: "reload_playbooks" }));
   };
 
-  // Smoothed rates: average last 5 polls to avoid 0-spike display
-  const smoothRate = (field) => {
-    if (history.length === 0) return 0;
-    const s = history.slice(-5);
-    return s.reduce((acc, h) => acc + (h[field] || 0), 0) / s.length;
-  };
 
   const filteredApps = apps.filter((a) => a.name.toLowerCase().includes(searchFilter.toLowerCase()));
   const filteredConns = selectedApp ? connections.filter((c) => c.app === selectedApp) : connections;
@@ -338,36 +324,7 @@ export default function NetMonitor() {
 
   const threatCount = threats.length;
   const openIncidentCount = incidents.filter((i) => i.status === "OPEN").length;
-  const criticalIncidentCount = incidents.filter((i) => i.status === "OPEN" && i.severity === "CRITICAL").length;
 
-  const _dlRate = formatRateDetailed(smoothRate("recv"));
-  const _ulRate = formatRateDetailed(smoothRate("sent"));
-  const statCards = [
-    { label: "DOWNLOAD RATE", value: _dlRate.main, rateSub: _dlRate.sub, color: "#38bdf8", bg: "rgba(56,189,248,0.08)", border: "rgba(56,189,248,0.12)", trend: <TrendBadge history={history} field="recv" /> },
-    { label: "UPLOAD RATE", value: _ulRate.main, rateSub: _ulRate.sub, color: "#fb923c", bg: "rgba(251,146,60,0.08)", border: "rgba(251,146,60,0.12)", trend: <TrendBadge history={history} field="sent" /> },
-    { label: "ACTIVE APPS", value: apps.filter((a) => !blockedApps.has(a.name)).length, color: "#a78bfa", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.12)", trend: null },
-    { label: "CONNECTIONS", value: connections.length, color: "#4ade80", bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.12)", trend: null },
-    {
-      label: "THREATS",
-      value: threatCount,
-      color: threatCount > 0 ? "#ef4444" : "#334155",
-      bg: threatCount > 0 ? "rgba(239,68,68,0.10)" : "rgba(51,65,85,0.06)",
-      border: threatCount > 0 ? "rgba(239,68,68,0.25)" : "rgba(51,65,85,0.12)",
-      trend: soarStats
-        ? <div style={{ fontSize: 9, color: "#475569", marginTop: 4 }}>{(soarStats.total_indicators || 0).toLocaleString()} indicators loaded</div>
-        : <div style={{ fontSize: 9, color: "#334155", marginTop: 4 }}>no feeds loaded</div>,
-    },
-    {
-      label: "INCIDENTS",
-      value: openIncidentCount,
-      color: criticalIncidentCount > 0 ? "#ef4444" : openIncidentCount > 0 ? "#fbbf24" : "#334155",
-      bg:    criticalIncidentCount > 0 ? "rgba(239,68,68,0.10)" : openIncidentCount > 0 ? "rgba(251,191,36,0.08)" : "rgba(51,65,85,0.06)",
-      border: criticalIncidentCount > 0 ? "rgba(239,68,68,0.25)" : openIncidentCount > 0 ? "rgba(251,191,36,0.2)" : "rgba(51,65,85,0.12)",
-      trend: <div style={{ fontSize: 9, color: "#475569", marginTop: 4 }}>
-        {criticalIncidentCount > 0 ? `${criticalIncidentCount} CRITICAL` : openIncidentCount > 0 ? "open incidents" : "all clear"}
-      </div>,
-    },
-  ];
 
   const tabs = [
     { id: "graph",       label: "📈 TRAFFIC" },
@@ -428,136 +385,25 @@ export default function NetMonitor() {
 
         {/* ══ TRAFFIC TAB ══════════════════════════════════════════ */}
         {tab === "graph" && (
-          <div>
-            {/* Stat cards */}
-            <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
-              {statCards.map((card) => (
-                <div key={card.label} style={{ flex: 1, padding: "14px 18px", borderRadius: 10, background: `linear-gradient(135deg,${card.bg},${card.bg.replace("0.08","0.02")})`, border: `1px solid ${card.border}` }}>
-                  <div style={{ fontSize: 9, color: "#64748b", letterSpacing: 1.5, marginBottom: 4 }}>{card.label}</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: card.color }}>{card.value}</div>
-                  {card.rateSub && <div style={{ fontSize: 9, color: `${card.color}88`, marginTop: 1, fontVariantNumeric: "tabular-nums" }}>{card.rateSub}</div>}
-                  {card.trend}
-                </div>
-              ))}
-            </div>
-
-            {/* Real-time traffic graph */}
-            <div ref={graphContainerRef} style={{ borderRadius: 10, border: "1px solid rgba(56,189,248,0.08)", background: "#0a0e17", padding: 16, marginBottom: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-                <div style={{ fontSize: 11, color: "#94a3b8", letterSpacing: 1 }}>REAL-TIME TRAFFIC <span style={{ color: "#475569", fontWeight: 400 }}>(last 2 min)</span></div>
-                <div style={{ display: "flex", gap: 16, fontSize: 10 }}>
-                  <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#38bdf8", marginRight: 4 }} />Download</span>
-                  <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#fb923c", marginRight: 4 }} />Upload</span>
-                </div>
-              </div>
-              <TrafficGraph history={history} width={graphWidth} height={260} />
-            </div>
-
-            {/* Per-app bandwidth bars with drill-in */}
-            <div style={{ borderRadius: 10, border: "1px solid rgba(56,189,248,0.08)", background: "#0a0e17", padding: 16, marginBottom: 16 }}>
-              <div style={{ fontSize: 11, color: "#94a3b8", letterSpacing: 1, marginBottom: 12 }}>
-                TOP APPS BY BANDWIDTH <span style={{ color: "#475569", fontWeight: 400 }}>(solid = download, faded = upload)</span>
-              </div>
-              <AppBandwidthBarsWithDrillIn
-                apps={apps}
-                connections={connections}
-                blockedApps={blockedApps}
-                triggerAction={triggerAction}
-                toggleBlock={toggleBlock}
-              />
-            </div>
-
-            {/* Global connection map */}
-            <div style={{ borderRadius: 10, border: "1px solid rgba(56,189,248,0.08)", background: "#0a0e17", padding: 16, marginBottom: 0 }}>
-              <div style={{ fontSize: 11, color: "#94a3b8", letterSpacing: 1, marginBottom: 12 }}>
-                GLOBAL CONNECTION MAP <span style={{ color: "#475569", fontWeight: 400 }}>(dot size = bandwidth · hover for details · click to inspect)</span>
-              </div>
-              <GlobalConnectionMap connections={connections} apps={apps} />
-            </div>
-          </div>
+          <TrafficTab
+            history={history}
+            apps={apps}
+            blockedApps={blockedApps}
+            connections={connections}
+            soarStats={soarStats}
+            incidents={incidents}
+            graphContainerRef={graphContainerRef}
+            graphWidth={graphWidth}
+            toggleBlock={toggleBlock}
+            triggerAction={triggerAction}
+            threatCount={threatCount}
+            openIncidentCount={openIncidentCount}
+          />
         )}
 
         {/* ══ ANALYTICS TAB ════════════════════════════════════════ */}
         {tab === "analytics" && (
-          <div>
-            {/* ── 1. Summary stat cards ─────────────────────────── */}
-            <AnalyticsSummary apps={apps} connections={connections} />
-
-            {/* ── 2. Bandwidth distribution + top hosts ─────────── */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
-              {/* Donut chart */}
-              <div style={{ borderRadius: 10, border: "1px solid rgba(56,189,248,0.08)", background: "#080d18", padding: "18px 20px" }}>
-                <SectionHeader
-                  title="BANDWIDTH DISTRIBUTION"
-                  desc="Share of total bandwidth consumed by each app (hover slices or legend to highlight)" />
-                <DonutChart apps={apps} />
-              </div>
-
-              {/* Top destinations compact list */}
-              <div style={{ borderRadius: 10, border: "1px solid rgba(56,189,248,0.08)", background: "#080d18", padding: "18px 20px" }}>
-                <SectionHeader
-                  title="TOP DESTINATIONS"
-                  desc="Most-connected remote hosts across all apps right now" />
-                {connections.length === 0 ? (
-                  <div style={{ color: "#475569", fontSize: 12, padding: "20px 0" }}>Waiting for connection data…</div>
-                ) : (() => {
-                  const hostMap = new Map();
-                  connections.forEach((c) => {
-                    if (!c.host) return;
-                    if (!hostMap.has(c.host)) hostMap.set(c.host, { count: 0, apps: new Set() });
-                    const e = hostMap.get(c.host);
-                    e.count++;
-                    if (c.app) e.apps.add(c.app);
-                  });
-                  const top = [...hostMap.entries()].sort((a, b) => b[1].count - a[1].count).slice(0, 10);
-                  const maxCount = top[0]?.[1].count || 1;
-                  return (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {top.map(([host, info], i) => (
-                        <div key={host}>
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, marginBottom: 3 }}>
-                            <span style={{ color: "#38bdf8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60%" }} title={host}>{host}</span>
-                            <span style={{ color: "#64748b" }}>{info.count} conn{info.count !== 1 ? "s" : ""}</span>
-                          </div>
-                          <div style={{ height: 5, background: "#0f1422", borderRadius: 3, overflow: "hidden" }}>
-                            <div style={{ height: "100%", width: `${(info.count / maxCount) * 100}%`, background: PALETTE[i % PALETTE.length], borderRadius: 3, transition: "width 0.3s" }} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
-
-            {/* ── 3. Traffic flow (Sankey) ───────────────────────── */}
-            <div style={{ marginBottom: 24 }}>
-              <SectionHeader
-                title="TRAFFIC FLOW"
-                desc="Sankey diagram showing how bandwidth flows from each app to its network destinations. Link thickness is proportional to bandwidth. Hover links for exact rates." />
-              <div style={{ borderRadius: 10, border: "1px solid rgba(56,189,248,0.08)", background: "#080d18", padding: 16, overflow: "visible" }}>
-                <SankeyChart apps={apps} connections={connections} />
-              </div>
-            </div>
-
-            {/* ── 4. Top 10 connections table ────────────────────── */}
-            <div style={{ marginBottom: 24 }}>
-              <SectionHeader
-                title="TOP 10 CONNECTIONS"
-                desc="Aggregated by app + destination. Click column headers to sort. Bandwidth is estimated proportionally from each app's total." />
-              <ConnectionsTable connections={connections} apps={apps} />
-            </div>
-
-            {/* ── 5. Treemap ─────────────────────────────────────── */}
-            <div>
-              <SectionHeader
-                title="BANDWIDTH TREEMAP"
-                desc="Tile area ∝ total bandwidth. Color intensity ∝ traffic level — brighter tiles are using more bandwidth. Hover any tile for detailed stats." />
-              <div style={{ borderRadius: 10, border: "1px solid rgba(56,189,248,0.08)", background: "#080d18", padding: 16 }}>
-                <TreemapChart apps={apps} />
-              </div>
-            </div>
-          </div>
+          <AnalyticsTab apps={apps} connections={connections} />
         )}
 
         {/* ══ NETWORK MAP TAB ══════════════════════════════════════ */}
