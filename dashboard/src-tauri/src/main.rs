@@ -1,6 +1,7 @@
 // Prevents a console window opening behind the app on Windows release builds.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::io::Write;
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager, WindowEvent};
 use tauri_plugin_shell::{process::CommandChild, ShellExt};
@@ -13,27 +14,46 @@ struct BackendState(std::sync::Arc<Mutex<Option<CommandChild>>>);
 
 // ── Backend lifecycle ─────────────────────────────────────────────────────────
 
+fn log_to_file(log_path: &std::path::Path, msg: &str) {
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(log_path) {
+        let _ = writeln!(f, "{msg}");
+    }
+    println!("{msg}");
+}
+
 fn spawn_backend(app: &AppHandle) -> Result<CommandChild, Box<dyn std::error::Error>> {
-    // Resolve %APPDATA%\com.coerie.netwatch  (created automatically by Tauri)
+    // Resolve %APPDATA%\com.coerie.flowstate  (created automatically by Tauri)
     let app_data_dir = app
         .path()
         .app_data_dir()
         .expect("Tauri could not resolve the app data directory");
 
+    let log_path = app_data_dir.join("flowstate.log");
+
     // Ensure data subdirectories exist before the backend starts.
-    // The backend creates these itself too, but doing it here guarantees they
-    // exist before the first WebSocket frame is processed.
     std::fs::create_dir_all(app_data_dir.join("data").join("snapshots"))?;
     std::fs::create_dir_all(app_data_dir.join("soar").join("feeds"))?;
 
+    // Create a default settings.json if one does not already exist.
+    let settings_path = app_data_dir.join("settings.json");
+    if !settings_path.exists() {
+        let default_settings = serde_json::json!({
+            "theme": "dark",
+            "refreshInterval": 2000,
+            "notifications": true
+        });
+        let _ = std::fs::write(&settings_path, default_settings.to_string());
+        log_to_file(&log_path, "[FlowState] Created default settings.json");
+    }
+
     let data_dir_str = app_data_dir.to_string_lossy().to_string();
 
-    // Log the sidecar path so we can debug if the binary is missing or misnamed.
-    println!("[Netwatch] Spawning sidecar 'netwatch-backend' with --data-dir: {data_dir_str}");
+    // Resolve the sidecar binary path for logging (Tauri resolves the exact
+    // arch-suffixed name, so we log the logical name and the data-dir).
+    log_to_file(&log_path, &format!("[FlowState] Sidecar binary : netwatch-backend"));
+    log_to_file(&log_path, &format!("[FlowState] Data directory : {data_dir_str}"));
 
     // Spawn the PyInstaller-compiled backend as a Tauri sidecar.
-    // The `--data-dir` flag overrides where the backend stores its DB,
-    // settings.json, and other runtime files.
     let spawn_result = app
         .shell()
         .sidecar("netwatch-backend")?
@@ -43,11 +63,14 @@ fn spawn_backend(app: &AppHandle) -> Result<CommandChild, Box<dyn std::error::Er
     let (mut rx, child) = match spawn_result {
         Ok(v) => v,
         Err(e) => {
-            let log_path = app_data_dir.join("launch_error.log");
-            let _ = std::fs::write(&log_path, format!("Failed to spawn netwatch-backend: {e}\n"));
+            let msg = format!("[FlowState] ERROR: Failed to spawn netwatch-backend: {e}");
+            log_to_file(&log_path, &msg);
+            eprintln!("{msg}");
             return Err(e.into());
         }
     };
+
+    log_to_file(&log_path, "[FlowState] netwatch-backend spawned successfully");
 
     // Drain the backend's stdout/stderr in a background task so the pipe
     // buffer never fills up and blocks the backend process.
