@@ -1,3 +1,5 @@
+import { T, withAlpha } from "../lib/theme";
+
 // ════════════════════════════════════════════════════════════════════
 // CONFIRMATION MODAL
 // ════════════════════════════════════════════════════════════════════
@@ -26,9 +28,9 @@ export function ConfirmModal({ pending, onConfirm, onCancel }) {
         onClick={(e) => e.stopPropagation()}
         style={{
           width: 480, borderRadius: 14,
-          background: "#0c1220",
-          border: `1px solid ${isDangerous ? "rgba(239,68,68,0.4)" : "rgba(56,189,248,0.25)"}`,
-          boxShadow: `0 20px 60px rgba(0,0,0,0.8), 0 0 30px ${isDangerous ? "rgba(239,68,68,0.15)" : "rgba(56,189,248,0.1)"}`,
+          background: T.panel,
+          border: `1px solid ${isDangerous ? "rgba(239,68,68,0.4)" : withAlpha(T.accent, 0.25)}`,
+          boxShadow: `0 20px 60px rgba(0,0,0,0.8), 0 0 30px ${isDangerous ? "rgba(239,68,68,0.15)" : withAlpha(T.accent, 0.1)}`,
           padding: "24px 28px",
           fontFamily: "inherit",
         }}
@@ -37,15 +39,15 @@ export function ConfirmModal({ pending, onConfirm, onCancel }) {
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <span style={{ fontSize: 24 }}>{meta.icon}</span>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: isDangerous ? "#ef4444" : "#e2e8f0" }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: isDangerous ? T.danger : T.text }}>
               {pending.title || meta.label}
             </div>
-            <div style={{ fontSize: 9, color: "#475569", letterSpacing: 1, marginTop: 2 }}>CONFIRM ACTION</div>
+            <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textMuted, letterSpacing: 1, marginTop: 2 }}>CONFIRM ACTION</div>
           </div>
         </div>
 
         {/* Description */}
-        <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.7, marginBottom: 14 }}>
+        <div style={{ fontSize: 12, color: T.textSecondary, lineHeight: 1.7, marginBottom: 14 }}>
           {pending.description}
         </div>
 
@@ -54,7 +56,7 @@ export function ConfirmModal({ pending, onConfirm, onCancel }) {
           <div style={{
             padding: "8px 12px", borderRadius: 6, marginBottom: 14,
             background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
-            fontSize: 10, color: "#64748b", fontFamily: "monospace",
+            fontSize: 11, color: T.textSecondary, fontFamily: "monospace",
             wordBreak: "break-all",
           }}>
             {pending.command}
@@ -65,10 +67,10 @@ export function ConfirmModal({ pending, onConfirm, onCancel }) {
         <div style={{
           display: "flex", alignItems: "center", gap: 8, marginBottom: 20,
           padding: "8px 12px", borderRadius: 6,
-          background: isDangerous ? "rgba(239,68,68,0.08)" : "rgba(56,189,248,0.05)",
-          border: `1px solid ${isDangerous ? "rgba(239,68,68,0.2)" : "rgba(56,189,248,0.12)"}`,
-          fontSize: 10,
-          color: isDangerous ? "#fca5a5" : "#64748b",
+          background: isDangerous ? "rgba(239,68,68,0.08)" : withAlpha(T.accent, 0.05),
+          border: `1px solid ${isDangerous ? "rgba(239,68,68,0.2)" : withAlpha(T.accent, 0.12)}`,
+          fontSize: 11,
+          color: isDangerous ? "#fca5a5" : T.textSecondary,
         }}>
           <span>{isDangerous ? "⚠️" : "ℹ️"}</span>
           <span>{isDangerous ? "This action cannot be undone." : "This action is reversible via the Audit Log."}</span>
@@ -78,7 +80,7 @@ export function ConfirmModal({ pending, onConfirm, onCancel }) {
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
           <button onClick={onCancel} style={{
             padding: "8px 20px", borderRadius: 7, border: "1px solid rgba(255,255,255,0.08)",
-            background: "transparent", color: "#64748b", fontSize: 11, fontWeight: 600,
+            background: "transparent", color: T.textSecondary, fontSize: 11, fontWeight: 600,
             cursor: "pointer", fontFamily: "inherit",
           }}>
             Cancel

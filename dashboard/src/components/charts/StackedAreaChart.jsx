@@ -1,6 +1,7 @@
 import { useEffect, useRef, useMemo } from "react";
 import { PALETTE } from "../../lib/colors";
 import { formatRate } from "../../lib/format";
+import { T } from "../../lib/theme";
 
 // ════════════════════════════════════════════════════════════════════
 // STACKED AREA CHART — top-5 apps over last 5 min (canvas)
@@ -21,11 +22,11 @@ export function StackedAreaChart({ appHistory, apps, width, height }) {
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
-    ctx.fillStyle = "#0a0e17";
+    ctx.fillStyle = T.panel;
     ctx.fillRect(0, 0, width, height);
 
     if (top5.length === 0) {
-      ctx.fillStyle = "#475569"; ctx.font = "11px monospace"; ctx.textAlign = "center";
+      ctx.fillStyle = T.textMuted; ctx.font = "11px monospace"; ctx.textAlign = "center";
       ctx.fillText("Waiting for app data…", width / 2, height / 2);
       return;
     }
@@ -83,7 +84,7 @@ export function StackedAreaChart({ appHistory, apps, width, height }) {
     }
 
     // Y-axis labels
-    ctx.fillStyle = "rgba(148,163,184,0.55)"; ctx.font = "9px monospace"; ctx.textAlign = "right";
+    ctx.fillStyle = "rgba(148,163,184,0.55)"; ctx.font = "11px monospace"; ctx.textAlign = "right";
     for (let i = 0; i <= 4; i++) {
       ctx.fillText(formatRate((maxTotal / 4) * (4 - i)), padL - 4, padT + (gH / 4) * i + 3);
     }
@@ -99,7 +100,7 @@ export function StackedAreaChart({ appHistory, apps, width, height }) {
     top5.forEach((app, j) => {
       ctx.fillStyle = PALETTE[j % PALETTE.length];
       ctx.fillRect(legX - 16, legY - 7, 10, 7);
-      ctx.font = "8px monospace";
+      ctx.font = "11px monospace";
       ctx.textAlign = "left";
       ctx.fillText(app.name.slice(0, 14), legX - 4, legY - 1);
       legX += Math.min(app.name.length, 14) * 5 + 24;

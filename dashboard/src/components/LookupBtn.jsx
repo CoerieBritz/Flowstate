@@ -1,3 +1,5 @@
+import { T, withAlpha } from "../lib/theme";
+
 // ════════════════════════════════════════════════════════════════════
 // PHASE 4 — THREAT INTEL PANEL + LOOKUP BUTTON
 // ════════════════════════════════════════════════════════════════════
@@ -10,9 +12,9 @@ export function LookupBtn({ ip, loading, cached, onClick }) {
       title={cached ? `Threat intel cached for ${ip} — click to view` : `Run VirusTotal + AbuseIPDB lookup for ${ip}`}
       style={{
         padding: "3px 7px", borderRadius: 5, border: "none", cursor: "pointer",
-        background: cached ? "rgba(56,189,248,0.15)" : "rgba(167,139,250,0.10)",
-        color: cached ? "#38bdf8" : "#a78bfa",
-        fontSize: 9, fontWeight: 700, fontFamily: "inherit",
+        background: cached ? withAlpha(T.accent, 0.15) : "rgba(167,139,250,0.10)",
+        color: cached ? T.accent : "#a78bfa",
+        fontSize: 11, fontWeight: 700, fontFamily: "inherit",
         display: "inline-flex", alignItems: "center", gap: 3,
         opacity: loading ? 0.6 : 1,
         minWidth: 52,
@@ -23,7 +25,7 @@ export function LookupBtn({ ip, loading, cached, onClick }) {
         : "🔍"}
       <span>{loading ? "…" : "Lookup"}</span>
       {cached && !loading && (
-        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#38bdf8", flexShrink: 0 }} />
+        <span style={{ width: 5, height: 5, borderRadius: "50%", background: T.accent, flexShrink: 0 }} />
       )}
     </button>
   );

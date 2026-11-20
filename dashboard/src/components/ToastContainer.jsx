@@ -1,3 +1,5 @@
+import { T, withAlpha } from "../lib/theme";
+
 // ════════════════════════════════════════════════════════════════════
 // TOAST NOTIFICATIONS
 // ════════════════════════════════════════════════════════════════════
@@ -16,15 +18,15 @@ export function ToastContainer({ toasts, onDismiss }) {
             ? "rgba(34,197,94,0.12)"
             : t.type === "error"
             ? "rgba(239,68,68,0.12)"
-            : "rgba(56,189,248,0.10)",
+            : withAlpha(T.accent, 0.10),
           border: `1px solid ${
             t.type === "success" ? "rgba(34,197,94,0.35)"
             : t.type === "error" ? "rgba(239,68,68,0.35)"
-            : "rgba(56,189,248,0.25)"}`,
+            : withAlpha(T.accent, 0.25)}`,
           boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
           backdropFilter: "blur(8px)",
           fontSize: 11,
-          color: t.type === "success" ? "#4ade80" : t.type === "error" ? "#fca5a5" : "#7dd3fc",
+          color: t.type === "success" ? T.success : t.type === "error" ? "#fca5a5" : "#7dd3fc",
           animation: "toastIn 0.2s ease",
         }}>
           <span style={{ fontSize: 14, flexShrink: 0 }}>
@@ -32,7 +34,7 @@ export function ToastContainer({ toasts, onDismiss }) {
           </span>
           <span style={{ flex: 1, lineHeight: 1.5 }}>{t.message}</span>
           <button onClick={() => onDismiss(t.id)} style={{
-            background: "none", border: "none", color: "#475569", cursor: "pointer",
+            background: "none", border: "none", color: T.textMuted, cursor: "pointer",
             fontSize: 14, padding: 0, flexShrink: 0, lineHeight: 1,
           }}>×</button>
         </div>

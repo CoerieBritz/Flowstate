@@ -1,4 +1,5 @@
 import { formatRateDetailed } from "../lib/format";
+import { T, withAlpha } from "../lib/theme";
 import { AppBandwidthBarsWithDrillIn } from "../components/charts/AppBandwidthBarsWithDrillIn";
 import { GlobalConnectionMap } from "../components/charts/GlobalConnectionMap";
 import { TrafficGraph } from "../components/charts/TrafficGraph";
@@ -15,27 +16,27 @@ export function TrafficTab({ history, apps, blockedApps, connections, soarStats,
   const _dlRate = formatRateDetailed(smoothRate("recv"));
   const _ulRate = formatRateDetailed(smoothRate("sent"));
   const statCards = [
-    { label: "DOWNLOAD RATE", value: _dlRate.main, rateSub: _dlRate.sub, color: "#38bdf8", bg: "rgba(56,189,248,0.08)", border: "rgba(56,189,248,0.12)", trend: <TrendBadge history={history} field="recv" /> },
-    { label: "UPLOAD RATE", value: _ulRate.main, rateSub: _ulRate.sub, color: "#fb923c", bg: "rgba(251,146,60,0.08)", border: "rgba(251,146,60,0.12)", trend: <TrendBadge history={history} field="sent" /> },
+    { label: "DOWNLOAD RATE", value: _dlRate.main, rateSub: _dlRate.sub, color: T.download, bg: withAlpha(T.download, 0.08), border: withAlpha(T.download, 0.12), trend: <TrendBadge history={history} field="recv" /> },
+    { label: "UPLOAD RATE", value: _ulRate.main, rateSub: _ulRate.sub, color: T.upload, bg: withAlpha(T.upload, 0.08), border: withAlpha(T.upload, 0.12), trend: <TrendBadge history={history} field="sent" /> },
     { label: "ACTIVE APPS", value: apps.filter((a) => !blockedApps.has(a.name)).length, color: "#a78bfa", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.12)", trend: null },
-    { label: "CONNECTIONS", value: connections.length, color: "#4ade80", bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.12)", trend: null },
+    { label: "CONNECTIONS", value: connections.length, color: T.success, bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.12)", trend: null },
     {
       label: "THREATS",
       value: threatCount,
-      color: threatCount > 0 ? "#ef4444" : "#334155",
+      color: threatCount > 0 ? T.danger : "#334155",
       bg: threatCount > 0 ? "rgba(239,68,68,0.10)" : "rgba(51,65,85,0.06)",
       border: threatCount > 0 ? "rgba(239,68,68,0.25)" : "rgba(51,65,85,0.12)",
       trend: soarStats
-        ? <div style={{ fontSize: 9, color: "#475569", marginTop: 4 }}>{(soarStats.total_indicators || 0).toLocaleString()} indicators loaded</div>
-        : <div style={{ fontSize: 9, color: "#334155", marginTop: 4 }}>no feeds loaded</div>,
+        ? <div style={{ fontSize: 11, color: T.textMuted, marginTop: 4 }}>{(soarStats.total_indicators || 0).toLocaleString()} indicators loaded</div>
+        : <div style={{ fontSize: 11, color: "#334155", marginTop: 4 }}>no feeds loaded</div>,
     },
     {
       label: "INCIDENTS",
       value: openIncidentCount,
-      color: criticalIncidentCount > 0 ? "#ef4444" : openIncidentCount > 0 ? "#fbbf24" : "#334155",
+      color: criticalIncidentCount > 0 ? T.danger : openIncidentCount > 0 ? T.warning : "#334155",
       bg:    criticalIncidentCount > 0 ? "rgba(239,68,68,0.10)" : openIncidentCount > 0 ? "rgba(251,191,36,0.08)" : "rgba(51,65,85,0.06)",
       border: criticalIncidentCount > 0 ? "rgba(239,68,68,0.25)" : openIncidentCount > 0 ? "rgba(251,191,36,0.2)" : "rgba(51,65,85,0.12)",
-      trend: <div style={{ fontSize: 9, color: "#475569", marginTop: 4 }}>
+      trend: <div style={{ fontSize: 11, color: T.textMuted, marginTop: 4 }}>
         {criticalIncidentCount > 0 ? `${criticalIncidentCount} CRITICAL` : openIncidentCount > 0 ? "open incidents" : "all clear"}
       </div>,
     },
@@ -47,30 +48,30 @@ export function TrafficTab({ history, apps, blockedApps, connections, soarStats,
       <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
         {statCards.map((card) => (
           <div key={card.label} style={{ flex: 1, padding: "14px 18px", borderRadius: 10, background: `linear-gradient(135deg,${card.bg},${card.bg.replace("0.08","0.02")})`, border: `1px solid ${card.border}` }}>
-            <div style={{ fontSize: 9, color: "#64748b", letterSpacing: 1.5, marginBottom: 4 }}>{card.label}</div>
+            <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1.5, marginBottom: 4 }}>{card.label}</div>
             <div style={{ fontSize: 22, fontWeight: 700, color: card.color }}>{card.value}</div>
-            {card.rateSub && <div style={{ fontSize: 9, color: `${card.color}88`, marginTop: 1, fontVariantNumeric: "tabular-nums" }}>{card.rateSub}</div>}
+            {card.rateSub && <div style={{ fontSize: 11, color: `${card.color}88`, marginTop: 1, fontVariantNumeric: "tabular-nums" }}>{card.rateSub}</div>}
             {card.trend}
           </div>
         ))}
       </div>
 
       {/* Real-time traffic graph */}
-      <div ref={graphContainerRef} style={{ borderRadius: 10, border: "1px solid rgba(56,189,248,0.08)", background: "#0a0e17", padding: 16, marginBottom: 16 }}>
+      <div ref={graphContainerRef} style={{ borderRadius: 10, border: `1px solid ${withAlpha(T.accent, 0.08)}`, background: T.panel, padding: 16, marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-          <div style={{ fontSize: 11, color: "#94a3b8", letterSpacing: 1 }}>REAL-TIME TRAFFIC <span style={{ color: "#475569", fontWeight: 400 }}>(last 2 min)</span></div>
-          <div style={{ display: "flex", gap: 16, fontSize: 10 }}>
-            <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#38bdf8", marginRight: 4 }} />Download</span>
-            <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#fb923c", marginRight: 4 }} />Upload</span>
+          <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1 }}>REAL-TIME TRAFFIC <span style={{ color: T.textMuted, fontWeight: 400 }}>(last 2 min)</span></div>
+          <div style={{ display: "flex", gap: 16, fontSize: 11 }}>
+            <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: T.download, marginRight: 4 }} />Download</span>
+            <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: T.upload, marginRight: 4 }} />Upload</span>
           </div>
         </div>
         <TrafficGraph history={history} width={graphWidth} height={260} />
       </div>
 
       {/* Per-app bandwidth bars with drill-in */}
-      <div style={{ borderRadius: 10, border: "1px solid rgba(56,189,248,0.08)", background: "#0a0e17", padding: 16, marginBottom: 16 }}>
-        <div style={{ fontSize: 11, color: "#94a3b8", letterSpacing: 1, marginBottom: 12 }}>
-          TOP APPS BY BANDWIDTH <span style={{ color: "#475569", fontWeight: 400 }}>(solid = download, faded = upload)</span>
+      <div style={{ borderRadius: 10, border: `1px solid ${withAlpha(T.accent, 0.08)}`, background: T.panel, padding: 16, marginBottom: 16 }}>
+        <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1, marginBottom: 12 }}>
+          TOP APPS BY BANDWIDTH <span style={{ color: T.textMuted, fontWeight: 400 }}>(solid = download, faded = upload)</span>
         </div>
         <AppBandwidthBarsWithDrillIn
           apps={apps}
@@ -82,9 +83,9 @@ export function TrafficTab({ history, apps, blockedApps, connections, soarStats,
       </div>
 
       {/* Global connection map */}
-      <div style={{ borderRadius: 10, border: "1px solid rgba(56,189,248,0.08)", background: "#0a0e17", padding: 16, marginBottom: 0 }}>
-        <div style={{ fontSize: 11, color: "#94a3b8", letterSpacing: 1, marginBottom: 12 }}>
-          GLOBAL CONNECTION MAP <span style={{ color: "#475569", fontWeight: 400 }}>(dot size = bandwidth · hover for details · click to inspect)</span>
+      <div style={{ borderRadius: 10, border: `1px solid ${withAlpha(T.accent, 0.08)}`, background: T.panel, padding: 16, marginBottom: 0 }}>
+        <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1, marginBottom: 12 }}>
+          GLOBAL CONNECTION MAP <span style={{ color: T.textMuted, fontWeight: 400 }}>(dot size = bandwidth · hover for details · click to inspect)</span>
         </div>
         <GlobalConnectionMap connections={connections} apps={apps} />
       </div>

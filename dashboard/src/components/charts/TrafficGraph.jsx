@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { formatRate } from "../../lib/format";
+import { T, withAlpha } from "../../lib/theme";
 
 // ════════════════════════════════════════════════════════════════════
 // TRAFFIC GRAPH (canvas — rolling 2-min area chart)
@@ -15,11 +16,11 @@ export function TrafficGraph({ history, width, height }) {
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
-    ctx.fillStyle = "#0a0e17";
+    ctx.fillStyle = T.panel;
     ctx.fillRect(0, 0, width, height);
 
     // Grid
-    ctx.strokeStyle = "rgba(56,189,248,0.06)";
+    ctx.strokeStyle = withAlpha(T.accent, 0.06);
     ctx.lineWidth = 1;
     for (let i = 0; i <= 5; i++) {
       const y = 20 + ((height - 50) / 5) * i;
@@ -27,7 +28,7 @@ export function TrafficGraph({ history, width, height }) {
     }
 
     if (history.length < 1) {
-      ctx.fillStyle = "#475569";
+      ctx.fillStyle = T.textMuted;
       ctx.font = "11px monospace";
       ctx.textAlign = "center";
       ctx.fillText("Waiting for data…", width / 2, height / 2);
@@ -68,10 +69,10 @@ export function TrafficGraph({ history, width, height }) {
       ctx.fill(); ctx.shadowBlur = 0;
     };
 
-    drawArea("recv", "rgba(56,189,248,0.40)", "rgba(56,189,248,0.02)", "#38bdf8");
-    drawArea("sent", "rgba(251,146,60,0.35)", "rgba(251,146,60,0.02)", "#fb923c");
+    drawArea("recv", withAlpha(T.download, 0.40), withAlpha(T.download, 0.02), T.download);
+    drawArea("sent", withAlpha(T.upload, 0.35), withAlpha(T.upload, 0.02), T.upload);
 
-    ctx.fillStyle = "rgba(148,163,184,0.6)"; ctx.font = "10px monospace"; ctx.textAlign = "right";
+    ctx.fillStyle = "rgba(148,163,184,0.6)"; ctx.font = "11px monospace"; ctx.textAlign = "right";
     for (let i = 0; i <= 5; i++) {
       ctx.fillText(formatRate((maxVal / 5) * (5 - i)), 46, 24 + (gH / 5) * i);
     }

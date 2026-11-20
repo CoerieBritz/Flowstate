@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { INPUT_STYLE } from "../lib/styles";
+import { T, withAlpha } from "../lib/theme";
 
 function generatePlaybookYaml(f) {
   const slug = f.name || (f.display_name || "playbook").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
@@ -68,23 +69,23 @@ export function PlaybookEditor({ playbook, onSave, onCancel, wsReady }) {
   return (
     <div style={{
       marginBottom: 20, padding: "20px 24px", borderRadius: 12,
-      background: "rgba(56,189,248,0.03)", border: "1px solid rgba(56,189,248,0.15)",
+      background: withAlpha(T.accent, 0.03), border: `1px solid ${withAlpha(T.accent, 0.15)}`,
     }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "#38bdf8", letterSpacing: 1.5 }}>
+        <div style={{ fontFamily: T.fontLabel, fontSize: 11, fontWeight: 700, color: T.accent, letterSpacing: 1.5 }}>
           {isNew ? "CREATE NEW PLAYBOOK" : `EDIT: ${playbook.display_name}`}
         </div>
-        <button onClick={onCancel} style={{ background: "none", border: "none", color: "#64748b", fontSize: 16, cursor: "pointer", padding: "0 4px" }}>✕</button>
+        <button onClick={onCancel} style={{ background: "none", border: "none", color: T.textSecondary, fontSize: 16, cursor: "pointer", padding: "0 4px" }}>✕</button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
         <div>
-          <div style={{ fontSize: 9, color: "#64748b", marginBottom: 5, letterSpacing: 1 }}>DISPLAY NAME</div>
+          <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, marginBottom: 5, letterSpacing: 1 }}>DISPLAY NAME</div>
           <input value={form.display_name} onChange={(e) => setF("display_name", e.target.value)} placeholder="e.g. Suspicious Outbound Traffic" style={FIELD} />
-          <div style={{ fontSize: 8, color: "#334155", marginTop: 4 }}>Filename: {filename}</div>
+          <div style={{ fontSize: 11, color: "#334155", marginTop: 4 }}>Filename: {filename}</div>
         </div>
         <div>
-          <div style={{ fontSize: 9, color: "#64748b", marginBottom: 5, letterSpacing: 1 }}>TRIGGER TYPE</div>
+          <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, marginBottom: 5, letterSpacing: 1 }}>TRIGGER TYPE</div>
           <select value={form.trigger_type} onChange={(e) => setF("trigger_type", e.target.value)} style={SELECT}>
             <option value="threat_flagged">Threat Flagged</option>
             <option value="bandwidth_spike">Bandwidth Spike</option>
@@ -96,14 +97,14 @@ export function PlaybookEditor({ playbook, onSave, onCancel, wsReady }) {
 
       {form.trigger_type === "threat_flagged" && (
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 9, color: "#64748b", marginBottom: 5, letterSpacing: 1 }}>MIN THREAT SEVERITY</div>
+          <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, marginBottom: 5, letterSpacing: 1 }}>MIN THREAT SEVERITY</div>
           <div style={{ display: "flex", gap: 8 }}>
             {["low", "medium", "high"].map((s) => (
               <button key={s} onClick={() => setF("min_severity", s)} style={{
                 padding: "5px 14px", borderRadius: 5, border: "none", cursor: "pointer",
-                fontFamily: "inherit", fontSize: 10, fontWeight: 600,
-                background: form.min_severity === s ? "rgba(56,189,248,0.2)" : "rgba(255,255,255,0.04)",
-                color: form.min_severity === s ? "#38bdf8" : "#64748b",
+                fontFamily: "inherit", fontSize: 11, fontWeight: 600,
+                background: form.min_severity === s ? withAlpha(T.accent, 0.2) : "rgba(255,255,255,0.04)",
+                color: form.min_severity === s ? T.accent : T.textSecondary,
               }}>{s.toUpperCase()}</button>
             ))}
           </div>
@@ -112,14 +113,14 @@ export function PlaybookEditor({ playbook, onSave, onCancel, wsReady }) {
 
       {form.trigger_type === "port_scan" && (
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 9, color: "#64748b", marginBottom: 5, letterSpacing: 1 }}>MIN PORTS TO TRIGGER</div>
+          <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, marginBottom: 5, letterSpacing: 1 }}>MIN PORTS TO TRIGGER</div>
           <input type="number" min={2} max={100} value={form.min_port_count}
             onChange={(e) => setF("min_port_count", Number(e.target.value))} style={{ ...FIELD, width: 120 }} />
         </div>
       )}
 
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 9, color: "#64748b", marginBottom: 5, letterSpacing: 1 }}>DESCRIPTION</div>
+        <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, marginBottom: 5, letterSpacing: 1 }}>DESCRIPTION</div>
         <textarea value={form.description} onChange={(e) => setF("description", e.target.value)}
           placeholder="What does this playbook detect and why…"
           rows={2} style={{ ...FIELD, resize: "vertical", lineHeight: 1.6 }} />
@@ -127,38 +128,38 @@ export function PlaybookEditor({ playbook, onSave, onCancel, wsReady }) {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 14 }}>
         <div>
-          <div style={{ fontSize: 9, color: "#64748b", marginBottom: 5, letterSpacing: 1 }}>INCIDENT SEVERITY</div>
+          <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, marginBottom: 5, letterSpacing: 1 }}>INCIDENT SEVERITY</div>
           <select value={form.severity} onChange={(e) => setF("severity", e.target.value)} style={SELECT}>
             {["LOW", "MEDIUM", "HIGH", "CRITICAL"].map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
         <div>
-          <div style={{ fontSize: 9, color: "#64748b", marginBottom: 8, letterSpacing: 1 }}>ENRICHMENT</div>
+          <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, marginBottom: 8, letterSpacing: 1 }}>ENRICHMENT</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
             {[
               { key: "enrich_vt", label: "VirusTotal" },
               { key: "enrich_ab", label: "AbuseIPDB" },
             ].map(({ key, label }) => (
-              <label key={key} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 10, color: form[key] ? "#e2e8f0" : "#64748b" }}>
+              <label key={key} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 11, color: form[key] ? T.text : T.textSecondary }}>
                 <input type="checkbox" checked={form[key]} onChange={(e) => setF(key, e.target.checked)}
-                  style={{ accentColor: "#38bdf8" }} />
+                  style={{ accentColor: T.accent }} />
                 {label}
               </label>
             ))}
           </div>
         </div>
         <div>
-          <div style={{ fontSize: 9, color: "#64748b", marginBottom: 8, letterSpacing: 1 }}>STATUS</div>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 10, color: form.enabled ? "#4ade80" : "#64748b" }}>
+          <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, marginBottom: 8, letterSpacing: 1 }}>STATUS</div>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 11, color: form.enabled ? T.success : T.textSecondary }}>
             <input type="checkbox" checked={form.enabled} onChange={(e) => setF("enabled", e.target.checked)}
-              style={{ accentColor: "#4ade80" }} />
+              style={{ accentColor: T.success }} />
             Enabled
           </label>
         </div>
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 9, color: "#64748b", marginBottom: 8, letterSpacing: 1 }}>RECOMMENDED ACTIONS</div>
+        <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, marginBottom: 8, letterSpacing: 1 }}>RECOMMENDED ACTIONS</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {form.recommended_actions.map((action, i) => (
             <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
@@ -167,13 +168,13 @@ export function PlaybookEditor({ playbook, onSave, onCancel, wsReady }) {
                 placeholder={`Action ${i + 1}…`} rows={1}
                 style={{ ...FIELD, flex: 1, resize: "vertical", lineHeight: 1.5 }} />
               <button onClick={() => removeAction(i)} disabled={form.recommended_actions.length <= 1}
-                style={{ background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: 14, padding: "6px 4px", flexShrink: 0 }}>✕</button>
+                style={{ background: "none", border: "none", color: T.textMuted, cursor: "pointer", fontSize: 14, padding: "6px 4px", flexShrink: 0 }}>✕</button>
             </div>
           ))}
           <button onClick={addAction} style={{
             alignSelf: "flex-start", padding: "4px 12px", borderRadius: 5,
             background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-            color: "#64748b", fontSize: 10, cursor: "pointer", fontFamily: "inherit",
+            color: T.textSecondary, fontSize: 11, cursor: "pointer", fontFamily: "inherit",
           }}>+ Add Action</button>
         </div>
       </div>
@@ -194,10 +195,10 @@ export function PlaybookEditor({ playbook, onSave, onCancel, wsReady }) {
         </button>
         <button onClick={onCancel} style={{
           padding: "8px 16px", borderRadius: 7, border: "1px solid rgba(255,255,255,0.08)",
-          background: "transparent", color: "#64748b", fontSize: 11, cursor: "pointer", fontFamily: "inherit",
+          background: "transparent", color: T.textSecondary, fontSize: 11, cursor: "pointer", fontFamily: "inherit",
         }}>Cancel</button>
-        <span style={{ fontSize: 9, color: "#334155", marginLeft: 4 }}>
-          Will write to <code style={{ color: "#38bdf8" }}>playbooks/{filename}</code>
+        <span style={{ fontSize: 11, color: "#334155", marginLeft: 4 }}>
+          Will write to <code style={{ color: T.accent }}>playbooks/{filename}</code>
         </span>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { hierarchy, treemap } from "d3-hierarchy";
 import { useContainerWidth } from "../../hooks/useContainerWidth";
 import { PALETTE } from "../../lib/colors";
 import { formatRate } from "../../lib/format";
+import { T, withAlpha } from "../../lib/theme";
 
 // ════════════════════════════════════════════════════════════════════
 // TREEMAP CHART — color intensity ∝ bandwidth, custom hover tooltip
@@ -29,9 +30,9 @@ export function TreemapChart({ apps }) {
   return (
     <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
       {leaves.length === 0 ? (
-        <div style={{ height: HEIGHT, display: "flex", alignItems: "center", justifyContent: "center", color: "#475569", fontSize: 12 }}>Waiting for bandwidth data…</div>
+        <div style={{ height: HEIGHT, display: "flex", alignItems: "center", justifyContent: "center", color: T.textMuted, fontSize: 12 }}>Waiting for bandwidth data…</div>
       ) : (
-        <div style={{ position: "relative", width: "100%", height: HEIGHT, background: "#0a0e17", borderRadius: 8, overflow: "hidden" }}>
+        <div style={{ position: "relative", width: "100%", height: HEIGHT, background: T.panel, borderRadius: 8, overflow: "hidden" }}>
           {leaves.map((leaf, i) => {
             const w = leaf.x1 - leaf.x0, h = leaf.y1 - leaf.y0;
             const color = PALETTE[i % PALETTE.length];
@@ -79,19 +80,19 @@ export function TreemapChart({ apps }) {
       {tooltip && (
         <div style={{
           position: "fixed", left: tooltip.x + 14, top: tooltip.y - 10,
-          background: "#0f1422", border: "1px solid rgba(56,189,248,0.2)",
+          background: T.inset, border: `1px solid ${withAlpha(T.accent, 0.2)}`,
           borderRadius: 8, padding: "8px 12px", fontSize: 11,
           pointerEvents: "none", zIndex: 9999,
           boxShadow: "0 4px 20px rgba(0,0,0,0.6)", minWidth: 160,
         }}>
-          <div style={{ fontWeight: 700, color: "#e2e8f0", marginBottom: 5 }}>
+          <div style={{ fontWeight: 700, color: T.text, marginBottom: 5 }}>
             {tooltip.data.icon} {tooltip.data.name}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 10, color: "#94a3b8" }}>
-            <div>Download: <span style={{ color: "#38bdf8", fontWeight: 600 }}>{formatRate(tooltip.data.recv)}</span></div>
-            <div>Upload:   <span style={{ color: "#fb923c", fontWeight: 600 }}>{formatRate(tooltip.data.sent)}</span></div>
-            <div>Total:    <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{formatRate(tooltip.data.recv + tooltip.data.sent)}</span></div>
-            <div>Connections: <span style={{ color: "#e2e8f0" }}>{tooltip.data.connections || 0}</span></div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 11, color: T.textSecondary }}>
+            <div>Download: <span style={{ color: T.download, fontWeight: 600 }}>{formatRate(tooltip.data.recv)}</span></div>
+            <div>Upload:   <span style={{ color: T.upload, fontWeight: 600 }}>{formatRate(tooltip.data.sent)}</span></div>
+            <div>Total:    <span style={{ color: T.text, fontWeight: 600 }}>{formatRate(tooltip.data.recv + tooltip.data.sent)}</span></div>
+            <div>Connections: <span style={{ color: T.text }}>{tooltip.data.connections || 0}</span></div>
           </div>
         </div>
       )}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { INPUT_STYLE } from "../lib/styles";
+import { T, withAlpha } from "../lib/theme";
 
 // ════════════════════════════════════════════════════════════════════
 // SETTINGS TAB — begins below
@@ -14,9 +15,9 @@ function SettingsSection({ title, children }) {
   return (
     <div style={{
       marginBottom: 24, padding: "20px 24px", borderRadius: 12,
-      background: "rgba(255,255,255,0.02)", border: "1px solid rgba(56,189,248,0.08)",
+      background: "rgba(255,255,255,0.02)", border: `1px solid ${withAlpha(T.accent, 0.08)}`,
     }}>
-      <div style={{ fontSize: 9, color: "#64748b", letterSpacing: 2, marginBottom: 16, fontWeight: 700 }}>
+      <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 2, marginBottom: 16, fontWeight: 700 }}>
         {title}
       </div>
       {children}
@@ -28,8 +29,8 @@ function SettingsField({ label, hint, children }) {
   return (
     <div style={{ marginBottom: 14 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
-        <label style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>{label}</label>
-        {hint && <span style={{ fontSize: 9, color: "#475569" }}>{hint}</span>}
+        <label style={{ fontSize: 11, color: T.textSecondary, fontWeight: 600 }}>{label}</label>
+        {hint && <span style={{ fontSize: 11, color: T.textMuted }}>{hint}</span>}
       </div>
       {children}
     </div>
@@ -41,8 +42,8 @@ function KeyStatusDot({ masked }) {
   return (
     <span title={isSet ? "Key is set" : "No key configured"} style={{
       display: "inline-block", width: 8, height: 8, borderRadius: "50%",
-      background: isSet ? "#4ade80" : "#334155",
-      boxShadow: isSet ? "0 0 6px #4ade80" : "none",
+      background: isSet ? T.success : "#334155",
+      boxShadow: isSet ? `0 0 6px ${T.success}` : "none",
       marginLeft: 6, verticalAlign: "middle", flexShrink: 0,
     }} />
   );
@@ -89,10 +90,10 @@ export function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsRea
 
       {/* ── API Keys ─────────────────────────────────────────────── */}
       <SettingsSection title="API KEYS — THREAT INTELLIGENCE">
-        <div style={{ fontSize: 11, color: "#64748b", marginBottom: 16, lineHeight: 1.7 }}>
+        <div style={{ fontSize: 11, color: T.textSecondary, marginBottom: 16, lineHeight: 1.7 }}>
           Add your own API keys to enable live threat lookups. Free tiers are
           sufficient for personal use. Keys are stored locally in{" "}
-          <code style={{ color: "#38bdf8", fontSize: 10 }}>data/settings.json</code>{" "}
+          <code style={{ color: T.accent, fontSize: 11 }}>data/settings.json</code>{" "}
           and never transmitted off your machine.
         </div>
 
@@ -106,9 +107,9 @@ export function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsRea
             style={INPUT_STYLE}
             autoComplete="new-password"
           />
-          <div style={{ marginTop: 5, fontSize: 9, color: "#475569" }}>
+          <div style={{ marginTop: 5, fontSize: 11, color: T.textMuted }}>
             Free tier: 4 req/min · 500 req/day ·{" "}
-            <span style={{ color: "#38bdf8", cursor: "pointer" }}
+            <span style={{ color: T.accent, cursor: "pointer" }}
               onClick={() => window.open("https://www.virustotal.com/gui/join-us", "_blank")}>
               Get a free key at virustotal.com ↗
             </span>
@@ -125,9 +126,9 @@ export function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsRea
             style={INPUT_STYLE}
             autoComplete="new-password"
           />
-          <div style={{ marginTop: 5, fontSize: 9, color: "#475569" }}>
+          <div style={{ marginTop: 5, fontSize: 11, color: T.textMuted }}>
             Free tier: 1 000 checks/day ·{" "}
-            <span style={{ color: "#38bdf8", cursor: "pointer" }}
+            <span style={{ color: T.accent, cursor: "pointer" }}
               onClick={() => window.open("https://www.abuseipdb.com/register", "_blank")}>
               Get a free key at abuseipdb.com ↗
             </span>
@@ -147,7 +148,7 @@ export function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsRea
           >
             {saving ? "Saving…" : "Save API Keys"}
           </button>
-          <span style={{ fontSize: 10, color: "#475569" }}>
+          <span style={{ fontSize: 11, color: T.textMuted }}>
             {wsReady ? "Keys are stored locally only." : "Backend offline"}
           </span>
         </div>
@@ -205,31 +206,31 @@ export function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsRea
           <>
             <div style={{ display: "flex", gap: 16, marginBottom: 14, flexWrap: "wrap" }}>
               {[
-                { label: "TOTAL INDICATORS", value: soarStats.total_indicators?.toLocaleString() ?? "—", color: "#38bdf8" },
+                { label: "TOTAL INDICATORS", value: soarStats.total_indicators?.toLocaleString() ?? "—", color: T.accent },
                 { label: "EXACT IPs",         value: soarStats.exact_ips?.toLocaleString()         ?? "—", color: "#a78bfa" },
-                { label: "CIDR RANGES",       value: soarStats.cidr_ranges?.toLocaleString()       ?? "—", color: "#fb923c" },
-                { label: "FEEDS LOADED",      value: feeds.length,                                          color: "#4ade80" },
+                { label: "CIDR RANGES",       value: soarStats.cidr_ranges?.toLocaleString()       ?? "—", color: T.orange },
+                { label: "FEEDS LOADED",      value: feeds.length,                                          color: T.success },
               ].map((s) => (
                 <div key={s.label} style={{
                   flex: 1, minWidth: 110, padding: "10px 14px", borderRadius: 8,
                   background: `${s.color}0d`, border: `1px solid ${s.color}22`,
                 }}>
-                  <div style={{ fontSize: 9, color: "#475569", letterSpacing: 1.2, marginBottom: 3 }}>{s.label}</div>
+                  <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textMuted, letterSpacing: 1.2, marginBottom: 3 }}>{s.label}</div>
                   <div style={{ fontSize: 20, fontWeight: 700, color: s.color }}>{s.value}</div>
                 </div>
               ))}
             </div>
 
             {feeds.length > 0 && (
-              <div style={{ borderRadius: 8, overflow: "hidden", border: "1px solid rgba(56,189,248,0.08)", marginBottom: 14 }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
+              <div style={{ borderRadius: 8, overflow: "hidden", border: `1px solid ${withAlpha(T.accent, 0.08)}`, marginBottom: 14 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
                   <thead>
-                    <tr style={{ background: "rgba(56,189,248,0.04)" }}>
+                    <tr style={{ background: withAlpha(T.accent, 0.04) }}>
                       {["Feed", "Indicators", "Type", "Last Updated"].map((h) => (
                         <th key={h} style={{
-                          padding: "8px 12px", textAlign: "left", fontSize: 9,
-                          letterSpacing: 1.2, color: "#64748b", fontWeight: 600,
-                          borderBottom: "1px solid rgba(56,189,248,0.06)",
+                          padding: "8px 12px", textAlign: "left", fontSize: 11,
+                          letterSpacing: 1.2, color: T.textSecondary, fontWeight: 600,
+                          borderBottom: `1px solid ${withAlpha(T.accent, 0.06)}`,
                         }}>{h}</th>
                       ))}
                     </tr>
@@ -240,24 +241,24 @@ export function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsRea
                         background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)",
                         borderBottom: "1px solid rgba(255,255,255,0.03)",
                       }}>
-                        <td style={{ padding: "8px 12px", fontWeight: 600, color: "#e2e8f0" }}>
+                        <td style={{ padding: "8px 12px", fontWeight: 600, color: T.text }}>
                           <span style={{ fontSize: 12, marginRight: 6 }}>
                             {f.count > 0 ? "✅" : "⚠️"}
                           </span>
                           {f.name}
                         </td>
-                        <td style={{ padding: "8px 12px", color: "#38bdf8" }}>
+                        <td style={{ padding: "8px 12px", color: T.accent }}>
                           {(f.count ?? 0).toLocaleString()}
                         </td>
                         <td style={{ padding: "8px 12px" }}>
                           <span style={{
-                            padding: "2px 7px", borderRadius: 4, fontSize: 9,
+                            padding: "2px 7px", borderRadius: 4, fontSize: 11,
                             background: "rgba(139,92,246,0.12)", color: "#a78bfa",
                           }}>
                             {f.type || "blocklist"}
                           </span>
                         </td>
-                        <td style={{ padding: "8px 12px", color: "#64748b", fontSize: 9 }}>
+                        <td style={{ padding: "8px 12px", color: T.textSecondary, fontSize: 11 }}>
                           {f.updated_at || soarStats.loaded_at || "—"}
                         </td>
                       </tr>
@@ -268,7 +269,7 @@ export function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsRea
             )}
           </>
         ) : (
-          <div style={{ color: "#475569", fontSize: 11, padding: "10px 0" }}>
+          <div style={{ color: T.textMuted, fontSize: 11, padding: "10px 0" }}>
             Threat intel engine not loaded — soar/ module may be missing.
           </div>
         )}
@@ -279,8 +280,8 @@ export function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsRea
           style={{
             padding: "8px 20px", borderRadius: 7, border: "none",
             cursor: wsReady ? "pointer" : "not-allowed",
-            background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.2)",
-            color: "#38bdf8", fontSize: 11, fontWeight: 600, fontFamily: "inherit",
+            background: withAlpha(T.accent, 0.1), border: `1px solid ${withAlpha(T.accent, 0.2)}`,
+            color: T.accent, fontSize: 11, fontWeight: 600, fontFamily: "inherit",
             opacity: wsReady ? 1 : 0.5,
           }}
         >
@@ -296,11 +297,11 @@ export function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsRea
               width: 40, height: 40, borderRadius: 10,
               background: "linear-gradient(135deg,#0ea5e9,#06b6d4)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 20, color: "#0a0e17", fontWeight: 900,
+              fontSize: 20, color: T.panel, fontWeight: 900,
             }}>⚡</div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#38bdf8", letterSpacing: 1 }}>FLOWSTATE</div>
-              <div style={{ fontSize: 9, color: "#475569", letterSpacing: 1.5 }}>
+              <div style={{ fontFamily: T.fontLabel, fontSize: 14, fontWeight: 700, color: T.accent, letterSpacing: 1 }}>FLOWSTATE</div>
+              <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textMuted, letterSpacing: 1.5 }}>
                 v{FLOWSTATE_VERSION} · LOCAL NETWORK MONITOR
               </div>
             </div>
@@ -308,8 +309,8 @@ export function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsRea
 
           <div style={{
             padding: "12px 16px", borderRadius: 8,
-            background: "rgba(56,189,248,0.05)", border: "1px solid rgba(56,189,248,0.12)",
-            fontSize: 11, color: "#94a3b8", lineHeight: 1.8,
+            background: withAlpha(T.accent, 0.05), border: `1px solid ${withAlpha(T.accent, 0.12)}`,
+            fontSize: 11, color: T.textSecondary, lineHeight: 1.8,
           }}>
             Made for the community — add your own API keys to enable live threat lookups.
             All monitoring is local. No data leaves your machine. Alert-only SOAR:
@@ -318,12 +319,12 @@ export function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsRea
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             {[
-              { label: "⭐ GitHub", color: "#fbbf24" },
-              { label: "📄 MIT License", color: "#4ade80" },
-              { label: "🛡️ Alert-Only Mode", color: "#38bdf8" },
+              { label: "⭐ GitHub", color: T.warning },
+              { label: "📄 MIT License", color: T.success },
+              { label: "🛡️ Alert-Only Mode", color: T.accent },
             ].map((b) => (
               <span key={b.label} style={{
-                padding: "5px 12px", borderRadius: 6, fontSize: 10, fontWeight: 600,
+                padding: "5px 12px", borderRadius: 6, fontSize: 11, fontWeight: 600,
                 background: `${b.color}12`, border: `1px solid ${b.color}30`, color: b.color,
               }}>
                 {b.label}
@@ -331,7 +332,7 @@ export function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsRea
             ))}
           </div>
 
-          <div style={{ fontSize: 9, color: "#334155", marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: "#334155", marginTop: 4 }}>
             Stack: Python 3.10+ · psutil · websockets · React 18 · Vite · d3
           </div>
         </div>

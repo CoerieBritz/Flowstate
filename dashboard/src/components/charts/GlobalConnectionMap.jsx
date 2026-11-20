@@ -5,6 +5,7 @@ import {
 import * as topojson from "topojson-client";
 import { useContainerWidth } from "../../hooks/useContainerWidth";
 import { formatRate } from "../../lib/format";
+import { T, withAlpha } from "../../lib/theme";
 
 // ════════════════════════════════════════════════════════════════════
 // GLOBAL CONNECTION MAP — d3-geo Natural Earth + TopoJSON world atlas
@@ -12,7 +13,7 @@ import { formatRate } from "../../lib/format";
 
 const TOPO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
-const PROTO_COLOR = { HTTPS: "#22c55e", HTTP: "#fbbf24" };
+const PROTO_COLOR = { HTTPS: "#22c55e", HTTP: T.warning };
 
 function protoColor(proto) {
   return PROTO_COLOR[proto] || "#f97316";
@@ -85,7 +86,7 @@ export function GlobalConnectionMap({ connections, apps }) {
     const c = { HTTPS: 0, HTTP: 0, other: 0 };
     d.protocols.forEach((p) => { if (p === "HTTPS") c.HTTPS++; else if (p === "HTTP") c.HTTP++; else c.other++; });
     if (c.HTTPS >= c.HTTP && c.HTTPS >= c.other) return "#22c55e";
-    if (c.HTTP >= c.other) return "#fbbf24";
+    if (c.HTTP >= c.other) return T.warning;
     return "#f97316";
   };
 
@@ -125,20 +126,20 @@ export function GlobalConnectionMap({ connections, apps }) {
       // Ocean fill (sphere outline clips everything nicely)
       ctx.beginPath();
       pathGen({ type: "Sphere" });
-      ctx.fillStyle = "#060c18";
+      ctx.fillStyle = T.panel;
       ctx.fill();
 
       // Graticule
       ctx.beginPath();
       pathGen(gratLines);
-      ctx.strokeStyle = "rgba(56,189,248,0.05)";
+      ctx.strokeStyle = withAlpha(T.accent, 0.05);
       ctx.lineWidth = 0.5;
       ctx.stroke();
 
       // Country fills
       ctx.beginPath();
       pathGen(countries);
-      ctx.fillStyle = "#151d2e";
+      ctx.fillStyle = T.inset;
       ctx.fill();
 
       // Internal borders
@@ -151,7 +152,7 @@ export function GlobalConnectionMap({ connections, apps }) {
       // Sphere ring
       ctx.beginPath();
       pathGen({ type: "Sphere" });
-      ctx.strokeStyle = "rgba(56,189,248,0.18)";
+      ctx.strokeStyle = withAlpha(T.accent, 0.18);
       ctx.lineWidth = 1;
       ctx.stroke();
 
@@ -215,7 +216,7 @@ export function GlobalConnectionMap({ connections, apps }) {
         if (r > 7) {
           ctx.font = `${Math.min(9, Math.floor(r * 0.9))}px monospace`;
           ctx.textAlign = "center";
-          ctx.fillStyle = "#e2e8f0cc";
+          ctx.fillStyle = `${T.text}cc`;
           ctx.fillText(d.cc, px[0], px[1] + 3);
         }
 
@@ -228,7 +229,7 @@ export function GlobalConnectionMap({ connections, apps }) {
       if (unk && unk.count > 0) {
         ctx.beginPath(); ctx.arc(22, H - 14, 5, 0, Math.PI * 2);
         ctx.fillStyle = "#334155aa"; ctx.fill();
-        ctx.fillStyle = "#64748b"; ctx.font = "8px monospace"; ctx.textAlign = "left";
+        ctx.fillStyle = T.textSecondary; ctx.font = "11px monospace"; ctx.textAlign = "left";
         ctx.fillText(`?? ${unk.count} unresolved`, 31, H - 10);
       }
 
@@ -236,13 +237,13 @@ export function GlobalConnectionMap({ connections, apps }) {
       if (oPx) {
         const pr = 5 + Math.sin(phase * 4) * 1.5;
         ctx.beginPath(); ctx.arc(oPx[0], oPx[1], pr + 5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(56,189,248,0.10)"; ctx.fill();
+        ctx.fillStyle = withAlpha(T.accent, 0.10); ctx.fill();
         ctx.beginPath(); ctx.arc(oPx[0], oPx[1], pr, 0, Math.PI * 2);
-        ctx.fillStyle = "#38bdf8";
-        ctx.shadowColor = "#38bdf8"; ctx.shadowBlur = 16;
+        ctx.fillStyle = T.accent;
+        ctx.shadowColor = T.accent; ctx.shadowBlur = 16;
         ctx.fill(); ctx.shadowBlur = 0;
-        ctx.font = "8px monospace"; ctx.textAlign = "left";
-        ctx.fillStyle = "#38bdf8cc";
+        ctx.font = "11px monospace"; ctx.textAlign = "left";
+        ctx.fillStyle = `${T.accent}cc`;
         ctx.fillText("JHB", oPx[0] + pr + 4, oPx[1] + 3);
       }
 
@@ -300,12 +301,12 @@ export function GlobalConnectionMap({ connections, apps }) {
 
       {/* Loading / error states */}
       {geoError && (
-        <div style={{ height: 260, display: "flex", alignItems: "center", justifyContent: "center", color: "#475569", fontSize: 12, background: "#0a0e17", borderRadius: 8 }}>
+        <div style={{ height: 260, display: "flex", alignItems: "center", justifyContent: "center", color: T.textMuted, fontSize: 12, background: T.panel, borderRadius: 8 }}>
           Map unavailable
         </div>
       )}
       {!geoError && !topoData && (
-        <div style={{ height: 260, display: "flex", alignItems: "center", justifyContent: "center", color: "#475569", fontSize: 12, background: "#0a0e17", borderRadius: 8 }}>
+        <div style={{ height: 260, display: "flex", alignItems: "center", justifyContent: "center", color: T.textMuted, fontSize: 12, background: T.panel, borderRadius: 8 }}>
           Map loading...
         </div>
       )}
@@ -321,15 +322,15 @@ export function GlobalConnectionMap({ connections, apps }) {
 
       {/* Legend */}
       {topoData && !geoError && (
-        <div style={{ position: "absolute", top: 14, right: 14, background: "rgba(5,8,16,0.85)", border: "1px solid rgba(56,189,248,0.12)", borderRadius: 8, padding: "8px 12px", fontSize: 9, display: "flex", flexDirection: "column", gap: 5 }}>
-          <div style={{ color: "#64748b", letterSpacing: 1, marginBottom: 2 }}>PROTOCOL</div>
-          {[["#22c55e","HTTPS"],["#fbbf24","HTTP"],["#f97316","Other TCP"]].map(([c,l]) => (
+        <div style={{ position: "absolute", top: 14, right: 14, background: "rgba(5,8,16,0.85)", border: `1px solid ${withAlpha(T.accent, 0.12)}`, borderRadius: 8, padding: "8px 12px", fontSize: 11, display: "flex", flexDirection: "column", gap: 5 }}>
+          <div style={{ fontFamily: T.fontLabel, color: T.textSecondary, letterSpacing: 1, marginBottom: 2 }}>PROTOCOL</div>
+          {[["#22c55e","HTTPS"],[T.warning,"HTTP"],["#f97316","Other TCP"]].map(([c,l]) => (
             <div key={l} style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: c, boxShadow: `0 0 6px ${c}` }} />
-              <span style={{ color: "#94a3b8" }}>{l}</span>
+              <span style={{ color: T.textSecondary }}>{l}</span>
             </div>
           ))}
-          <div style={{ borderTop: "1px solid rgba(56,189,248,0.08)", marginTop: 4, paddingTop: 4, color: "#64748b" }}>
+          <div style={{ borderTop: `1px solid ${withAlpha(T.accent, 0.08)}`, marginTop: 4, paddingTop: 4, color: T.textSecondary }}>
             Dot size = bandwidth<br/>Click dot to inspect
           </div>
         </div>
@@ -337,33 +338,33 @@ export function GlobalConnectionMap({ connections, apps }) {
 
       {/* Hover tooltip */}
       {tooltip && (
-        <div style={{ position: "fixed", left: tooltip.mx + 14, top: tooltip.my - 10, background: "#0f1422", border: `1px solid ${dotColor(tooltip.dot)}44`, borderRadius: 8, padding: "10px 14px", fontSize: 11, pointerEvents: "none", zIndex: 9999, boxShadow: "0 4px 20px rgba(0,0,0,0.7)", minWidth: 200 }}>
+        <div style={{ position: "fixed", left: tooltip.mx + 14, top: tooltip.my - 10, background: T.inset, border: `1px solid ${dotColor(tooltip.dot)}44`, borderRadius: 8, padding: "10px 14px", fontSize: 11, pointerEvents: "none", zIndex: 9999, boxShadow: "0 4px 20px rgba(0,0,0,0.7)", minWidth: 200 }}>
           <div style={{ fontWeight: 700, color: dotColor(tooltip.dot), marginBottom: 6 }}>
             {tooltip.dot.cc} — {[...tooltip.dot.hosts].slice(0, 2).join(", ")}{tooltip.dot.hosts.size > 2 ? ` +${tooltip.dot.hosts.size - 2}` : ""}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 10, color: "#94a3b8" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 11, color: T.textSecondary }}>
             <div>Bandwidth: <span style={{ color: dotColor(tooltip.dot), fontWeight: 600 }}>{formatRate(tooltip.dot.bw)}</span></div>
-            <div>Apps: <span style={{ color: "#e2e8f0" }}>{[...tooltip.dot.apps].join(", ").slice(0, 40)}</span></div>
-            <div>Protocols: <span style={{ color: "#e2e8f0" }}>{[...tooltip.dot.protocols].join(", ")}</span></div>
-            <div>Connections: <span style={{ color: "#e2e8f0" }}>{tooltip.dot.count}</span></div>
+            <div>Apps: <span style={{ color: T.text }}>{[...tooltip.dot.apps].join(", ").slice(0, 40)}</span></div>
+            <div>Protocols: <span style={{ color: T.text }}>{[...tooltip.dot.protocols].join(", ")}</span></div>
+            <div>Connections: <span style={{ color: T.text }}>{tooltip.dot.count}</span></div>
           </div>
         </div>
       )}
 
       {/* Selected destination detail panel */}
       {selected && selectedConns.length > 0 && (
-        <div style={{ marginTop: 10, background: "#080d18", border: "1px solid rgba(56,189,248,0.10)", borderRadius: 8, padding: "12px 16px" }}>
-          <div style={{ fontSize: 10, color: "#94a3b8", letterSpacing: 1, marginBottom: 10 }}>
+        <div style={{ marginTop: 10, background: T.panel, border: `1px solid ${withAlpha(T.accent, 0.10)}`, borderRadius: 8, padding: "12px 16px" }}>
+          <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1, marginBottom: 10 }}>
             CONNECTIONS TO SELECTED DESTINATION
-            <button onClick={() => setSelected(null)} style={{ float: "right", background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>✕</button>
+            <button onClick={() => setSelected(null)} style={{ float: "right", background: "none", border: "none", color: T.textMuted, cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>✕</button>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 160, overflow: "auto" }}>
             {selectedConns.map((c, i) => (
-              <div key={i} style={{ display: "flex", gap: 8, fontSize: 10, padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+              <div key={i} style={{ display: "flex", gap: 8, fontSize: 11, padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
                 <span style={{ color: "#a78bfa", minWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.app}</span>
-                <span style={{ color: "#38bdf8", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={c.host}>{c.host || c.remote}</span>
-                <span style={{ color: "#64748b", minWidth: 40 }}>:{c.port}</span>
-                <span style={{ padding: "1px 5px", borderRadius: 3, fontSize: 8, background: `${protoColor(c.protocol)}18`, color: protoColor(c.protocol) }}>{c.protocol}</span>
+                <span style={{ color: T.accent, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={c.host}>{c.host || c.remote}</span>
+                <span style={{ color: T.textSecondary, minWidth: 40 }}>:{c.port}</span>
+                <span style={{ padding: "1px 5px", borderRadius: 3, fontSize: 11, background: `${protoColor(c.protocol)}18`, color: protoColor(c.protocol) }}>{c.protocol}</span>
               </div>
             ))}
           </div>

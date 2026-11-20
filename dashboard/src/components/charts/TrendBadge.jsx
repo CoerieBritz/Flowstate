@@ -1,3 +1,5 @@
+import { T } from "../../lib/theme";
+
 // ── Trend badge ───────────────────────────────────────────────────────
 export function TrendBadge({ history, field }) {
   if (history.length < 20) return null;
@@ -9,7 +11,7 @@ export function TrendBadge({ history, field }) {
   const pct = olderAvg === 0 ? 100 : ((recent - olderAvg) / olderAvg) * 100;
   const up = pct >= 0;
   return (
-    <div style={{ fontSize: 9, color: up ? "#4ade80" : "#94a3b8", marginTop: 4, display: "flex", alignItems: "center", gap: 3 }}>
+    <div style={{ fontSize: 11, color: up ? T.success : T.textSecondary, marginTop: 4, display: "flex", alignItems: "center", gap: 3 }}>
       <span>{up ? "▲" : "▼"}</span>
       <span>{Math.abs(pct).toFixed(0)}% vs last min</span>
     </div>

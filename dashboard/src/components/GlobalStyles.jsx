@@ -1,3 +1,5 @@
+import { T, withAlpha } from "../lib/theme";
+
 export function GlobalStyles() {
   return (
     <style>{`
@@ -8,7 +10,7 @@ export function GlobalStyles() {
         body { margin: 0; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: ${withAlpha(T.accent, 0.2)}; border-radius: 3px; }
       `}</style>
   );
 }

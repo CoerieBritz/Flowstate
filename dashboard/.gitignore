@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Copied from @fontsource / src/assets by scripts/copy-assets.mjs
+public/fonts/
+public/logo.png

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ActionBtn } from "../components/ActionBtn";
 import { INC_SEV } from "../lib/colors";
 import { fmtRelTime } from "../lib/format";
+import { T, withAlpha } from "../lib/theme";
 
 // ════════════════════════════════════════════════════════════════════
 // INCIDENTS TAB — SOAR Phase 2 alert correlation
@@ -16,9 +17,9 @@ const RULE_LABELS = {
 };
 
 const STATUS_STYLE = {
-  OPEN:         { color: "#ef4444", bg: "rgba(239,68,68,0.12)",    label: "OPEN"         },
-  ACKNOWLEDGED: { color: "#fbbf24", bg: "rgba(251,191,36,0.12)",   label: "ACKNOWLEDGED" },
-  RESOLVED:     { color: "#4ade80", bg: "rgba(34,197,94,0.10)",    label: "RESOLVED"     },
+  OPEN:         { color: T.danger, bg: "rgba(239,68,68,0.12)",    label: "OPEN"         },
+  ACKNOWLEDGED: { color: T.warning, bg: "rgba(251,191,36,0.12)",   label: "ACKNOWLEDGED" },
+  RESOLVED:     { color: T.success, bg: "rgba(34,197,94,0.10)",    label: "RESOLVED"     },
 };
 
 function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
@@ -46,7 +47,7 @@ function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
         <div style={{
           flexShrink: 0, padding: "3px 8px", borderRadius: 5,
           background: `${sev.color}22`, border: `1px solid ${sev.color}44`,
-          fontSize: 9, fontWeight: 800, color: sev.color, letterSpacing: 1,
+          fontSize: 11, fontWeight: 800, color: sev.color, letterSpacing: 1,
           minWidth: 64, textAlign: "center",
           boxShadow: sev.pulse ? `0 0 8px ${sev.color}55` : "none",
         }}>
@@ -58,23 +59,23 @@ function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <div style={{
               fontSize: 12, fontWeight: 700,
-              color: isResolved ? "#64748b" : "#e2e8f0",
+              color: isResolved ? T.textSecondary : T.text,
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             }}>
               {incident.title}
             </div>
             {incident.source === "playbook" && (
               <span style={{
-                flexShrink: 0, padding: "1px 6px", borderRadius: 4, fontSize: 8,
+                flexShrink: 0, padding: "1px 6px", borderRadius: 4, fontSize: 11,
                 background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.25)",
-                color: "#fbbf24", fontWeight: 700, letterSpacing: 0.5,
+                color: T.warning, fontWeight: 700, letterSpacing: 0.5,
               }}>
                 📋 PLAYBOOK
               </span>
             )}
           </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 3, flexWrap: "wrap", fontSize: 9, color: "#475569" }}>
-            <span style={{ color: "#64748b" }}>
+          <div style={{ display: "flex", gap: 10, marginTop: 3, flexWrap: "wrap", fontSize: 11, color: T.textMuted }}>
+            <span style={{ color: T.textSecondary }}>
               {incident.source === "playbook"
                 ? (incident.playbook_display || incident.rule)
                 : (RULE_LABELS[incident.rule] || incident.rule)}
@@ -98,14 +99,14 @@ function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
         {/* Status badge */}
         <div style={{
           flexShrink: 0, padding: "2px 8px", borderRadius: 4,
-          background: st.bg, fontSize: 9, fontWeight: 700, color: st.color,
+          background: st.bg, fontSize: 11, fontWeight: 700, color: st.color,
           letterSpacing: 0.5,
         }}>
           {st.label}
         </div>
 
         {/* Chevron */}
-        <div style={{ flexShrink: 0, color: "#475569", fontSize: 11, transition: "transform 0.2s", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}>▼</div>
+        <div style={{ flexShrink: 0, color: T.textMuted, fontSize: 11, transition: "transform 0.2s", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}>▼</div>
       </div>
 
       {/* ── Expanded detail ── */}
@@ -115,23 +116,23 @@ function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
           <div style={{ display: "flex", gap: 24, marginBottom: 14, flexWrap: "wrap" }}>
             {incident.processes.length > 0 && (
               <div>
-                <div style={{ fontSize: 9, color: "#475569", letterSpacing: 1, marginBottom: 4 }}>PROCESSES</div>
+                <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textMuted, letterSpacing: 1, marginBottom: 4 }}>PROCESSES</div>
                 <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                   {incident.processes.map((p) => (
-                    <span key={p} style={{ padding: "2px 7px", borderRadius: 4, background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.25)", fontSize: 10, color: "#a78bfa" }}>{p}</span>
+                    <span key={p} style={{ padding: "2px 7px", borderRadius: 4, background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.25)", fontSize: 11, color: "#a78bfa" }}>{p}</span>
                   ))}
                 </div>
               </div>
             )}
             {incident.ips.length > 0 && (
               <div>
-                <div style={{ fontSize: 9, color: "#475569", letterSpacing: 1, marginBottom: 4 }}>IPs / DESTINATIONS</div>
+                <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textMuted, letterSpacing: 1, marginBottom: 4 }}>IPs / DESTINATIONS</div>
                 <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                   {incident.ips.slice(0, 6).map((ip) => (
-                    <span key={ip} style={{ padding: "2px 7px", borderRadius: 4, background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", fontSize: 10, color: "#38bdf8", fontVariantNumeric: "tabular-nums" }}>{ip}</span>
+                    <span key={ip} style={{ padding: "2px 7px", borderRadius: 4, background: withAlpha(T.accent, 0.08), border: `1px solid ${withAlpha(T.accent, 0.2)}`, fontSize: 11, color: T.accent, fontVariantNumeric: "tabular-nums" }}>{ip}</span>
                   ))}
                   {incident.ips.length > 6 && (
-                    <span style={{ fontSize: 10, color: "#475569" }}>+{incident.ips.length - 6} more</span>
+                    <span style={{ fontSize: 11, color: T.textMuted }}>+{incident.ips.length - 6} more</span>
                   )}
                 </div>
               </div>
@@ -139,7 +140,7 @@ function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
           </div>
 
           {/* Alert timeline */}
-          <div style={{ fontSize: 9, color: "#475569", letterSpacing: 1, marginBottom: 8 }}>ALERT TIMELINE</div>
+          <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textMuted, letterSpacing: 1, marginBottom: 8 }}>ALERT TIMELINE</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 14, maxHeight: 200, overflowY: "auto" }}>
             {incident.alerts.map((a, i) => (
               <div key={i} style={{
@@ -147,24 +148,24 @@ function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
                 padding: "6px 10px", borderRadius: 6,
                 background: "rgba(255,255,255,0.03)",
                 border: "1px solid rgba(255,255,255,0.04)",
-                fontSize: 10,
+                fontSize: 11,
               }}>
-                <span style={{ color: "#475569", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{a.time}</span>
-                <span style={{ color: "#94a3b8", flex: 1 }}>{a.message}</span>
+                <span style={{ color: T.textMuted, flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{a.time}</span>
+                <span style={{ color: T.textSecondary, flex: 1 }}>{a.message}</span>
                 {a.rule && (
-                  <span style={{ flexShrink: 0, fontSize: 8, padding: "1px 5px", borderRadius: 3, background: "rgba(56,189,248,0.08)", color: "#64748b" }}>{a.rule}</span>
+                  <span style={{ flexShrink: 0, fontSize: 11, padding: "1px 5px", borderRadius: 3, background: withAlpha(T.accent, 0.08), color: T.textSecondary }}>{a.rule}</span>
                 )}
               </div>
             ))}
           </div>
 
           {/* Recommended actions */}
-          <div style={{ fontSize: 9, color: "#475569", letterSpacing: 1, marginBottom: 8 }}>RECOMMENDED ACTIONS</div>
+          <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textMuted, letterSpacing: 1, marginBottom: 8 }}>RECOMMENDED ACTIONS</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 16 }}>
             {incident.recommended_actions.map((action, i) => (
               <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 11 }}>
                 <span style={{ color: sev.color, flexShrink: 0, marginTop: 1 }}>›</span>
-                <span style={{ color: "#94a3b8" }}>{action}</span>
+                <span style={{ color: T.textSecondary }}>{action}</span>
               </div>
             ))}
           </div>
@@ -172,10 +173,10 @@ function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
           {/* Response actions */}
           {onAction && !isResolved && (incident.ips.length > 0 || incident.processes.length > 0) && (
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 9, color: "#475569", letterSpacing: 1, marginBottom: 8 }}>RESPONSE ACTIONS</div>
+              <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textMuted, letterSpacing: 1, marginBottom: 8 }}>RESPONSE ACTIONS</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {incident.ips.slice(0, 5).map((ip) => (
-                  <ActionBtn key={ip} icon="🚫" label={`Block ${ip}`} color="#ef4444"
+                  <ActionBtn key={ip} icon="🚫" label={`Block ${ip}`} color={T.danger}
                     onClick={() => onAction(
                       "block_ip", { ip },
                       `Block IP ${ip}`,
@@ -189,7 +190,7 @@ function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
                   const app = (apps || []).find((a) => a.name === proc);
                   if (!app?.pid) return null;
                   return (
-                    <ActionBtn key={proc} icon="☠️" label={`Kill ${proc}`} color="#fb923c"
+                    <ActionBtn key={proc} icon="☠️" label={`Kill ${proc}`} color={T.orange}
                       onClick={() => onAction(
                         "kill_process", { pid: app.pid, name: proc },
                         `Kill Process: ${proc}`,
@@ -219,7 +220,7 @@ function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
           {!isResolved && (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {onAction && (
-                <ActionBtn icon="📸" label="Snapshot" color="#38bdf8"
+                <ActionBtn icon="📸" label="Snapshot" color={T.accent}
                   onClick={() => onAction(
                     "capture_snapshot", {},
                     "Capture System Snapshot",
@@ -234,8 +235,8 @@ function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
                   onClick={() => onAcknowledge(incident.id)}
                   style={{
                     padding: "6px 16px", borderRadius: 6, border: "none",
-                    background: "rgba(251,191,36,0.15)", color: "#fbbf24",
-                    fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                    background: "rgba(251,191,36,0.15)", color: T.warning,
+                    fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
                   }}
                 >
                   Acknowledge
@@ -245,8 +246,8 @@ function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
                 onClick={() => onResolve(incident.id)}
                 style={{
                   padding: "6px 16px", borderRadius: 6, border: "none",
-                  background: "rgba(34,197,94,0.15)", color: "#4ade80",
-                  fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                  background: "rgba(34,197,94,0.15)", color: T.success,
+                  fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
                 }}
               >
                 Resolve
@@ -272,15 +273,15 @@ export function IncidentsTab({ incidents, onAcknowledge, onResolve, onAction, ap
       {/* Summary row */}
       <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
         {[
-          { label: "OPEN",         value: open.length,     color: "#ef4444" },
-          { label: "ACKNOWLEDGED", value: acked.length,    color: "#fbbf24" },
-          { label: "RESOLVED",     value: resolved.length, color: "#4ade80" },
+          { label: "OPEN",         value: open.length,     color: T.danger },
+          { label: "ACKNOWLEDGED", value: acked.length,    color: T.warning },
+          { label: "RESOLVED",     value: resolved.length, color: T.success },
         ].map((s) => (
           <div key={s.label} style={{
             padding: "10px 16px", borderRadius: 8, flex: 1, minWidth: 100,
             background: `${s.color}0d`, border: `1px solid ${s.color}22`,
           }}>
-            <div style={{ fontSize: 9, color: "#475569", letterSpacing: 1.5, marginBottom: 4 }}>{s.label}</div>
+            <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textMuted, letterSpacing: 1.5, marginBottom: 4 }}>{s.label}</div>
             <div style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.value}</div>
           </div>
         ))}
@@ -288,7 +289,7 @@ export function IncidentsTab({ incidents, onAcknowledge, onResolve, onAction, ap
           const c = INC_SEV[sev];
           return (
             <div key={sev} style={{ padding: "10px 16px", borderRadius: 8, background: c.bg, border: `1px solid ${c.border}` }}>
-              <div style={{ fontSize: 9, color: "#475569", letterSpacing: 1.5, marginBottom: 4 }}>{sev}</div>
+              <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textMuted, letterSpacing: 1.5, marginBottom: 4 }}>{sev}</div>
               <div style={{ fontSize: 22, fontWeight: 700, color: c.color }}>{count}</div>
             </div>
           );
@@ -298,23 +299,23 @@ export function IncidentsTab({ incidents, onAcknowledge, onResolve, onAction, ap
       {/* Alert-only mode notice */}
       <div style={{
         padding: "8px 14px", borderRadius: 8, marginBottom: 16,
-        background: "rgba(56,189,248,0.05)", border: "1px solid rgba(56,189,248,0.12)",
-        fontSize: 10, color: "#475569", display: "flex", alignItems: "center", gap: 8,
+        background: withAlpha(T.accent, 0.05), border: `1px solid ${withAlpha(T.accent, 0.12)}`,
+        fontSize: 11, color: T.textMuted, display: "flex", alignItems: "center", gap: 8,
       }}>
-        <span style={{ color: "#38bdf8" }}>ℹ</span>
+        <span style={{ color: T.accent }}>ℹ</span>
         Alert-only mode — the correlator groups and recommends, never executes.
         No traffic has been blocked automatically.
       </div>
 
       {incidents.length === 0 ? (
-        <div style={{ color: "#475569", fontSize: 12, padding: "40px 0", textAlign: "center" }}>
+        <div style={{ color: T.textMuted, fontSize: 12, padding: "40px 0", textAlign: "center" }}>
           No incidents yet — the correlator is watching for patterns.
         </div>
       ) : (
         <>
           {open.length > 0 && (
             <>
-              <div style={{ fontSize: 9, color: "#64748b", letterSpacing: 1.5, marginBottom: 10 }}>OPEN INCIDENTS</div>
+              <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1.5, marginBottom: 10 }}>OPEN INCIDENTS</div>
               {open.map((inc) => (
                 <IncidentCard key={inc.id} incident={inc} onAcknowledge={onAcknowledge} onResolve={onResolve} onAction={onAction} apps={apps} />
               ))}
@@ -322,7 +323,7 @@ export function IncidentsTab({ incidents, onAcknowledge, onResolve, onAction, ap
           )}
           {acked.length > 0 && (
             <>
-              <div style={{ fontSize: 9, color: "#64748b", letterSpacing: 1.5, margin: "16px 0 10px" }}>ACKNOWLEDGED</div>
+              <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1.5, margin: "16px 0 10px" }}>ACKNOWLEDGED</div>
               {acked.map((inc) => (
                 <IncidentCard key={inc.id} incident={inc} onAcknowledge={onAcknowledge} onResolve={onResolve} onAction={onAction} apps={apps} />
               ))}
@@ -330,7 +331,7 @@ export function IncidentsTab({ incidents, onAcknowledge, onResolve, onAction, ap
           )}
           {resolved.length > 0 && (
             <>
-              <div style={{ fontSize: 9, color: "#64748b", letterSpacing: 1.5, margin: "16px 0 10px" }}>RESOLVED (last 10)</div>
+              <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1.5, margin: "16px 0 10px" }}>RESOLVED (last 10)</div>
               {resolved.map((inc) => (
                 <IncidentCard key={inc.id} incident={inc} onAcknowledge={onAcknowledge} onResolve={onResolve} onAction={onAction} apps={apps} />
               ))}

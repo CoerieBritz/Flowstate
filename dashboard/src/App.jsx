@@ -12,6 +12,7 @@ import { ThreatIntelPanel } from "./components/ThreatIntelPanel";
 import { ToastContainer } from "./components/ToastContainer";
 import { useContainerWidth } from "./hooks/useContainerWidth";
 import { getAppIcon } from "./lib/format";
+import { T, withAlpha } from "./lib/theme";
 import { getWsToken, WS_URL } from "./lib/ws";
 import { AlertsTab } from "./tabs/AlertsTab";
 import { AnalyticsTab } from "./tabs/AnalyticsTab";
@@ -323,7 +324,7 @@ export default function NetMonitor() {
   ];
 
   return (
-    <div style={{ fontFamily: "'JetBrains Mono','Fira Code','SF Mono',monospace", background: "#060a12", color: "#e2e8f0", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ fontFamily: T.fontMono, background: T.bg, color: T.text, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
 
       {/* ── HEADER ────────────────────────────────────────────────── */}
       <AppHeader totalSent={totalSent} totalRecv={totalRecv} wsStatus={wsStatus} />
@@ -331,12 +332,12 @@ export default function NetMonitor() {
       <StatusBanner status={wsStatus} />
 
       {/* ── TAB BAR ───────────────────────────────────────────────── */}
-      <div style={{ display: "flex", borderBottom: "1px solid rgba(56,189,248,0.08)", background: "#080c16" }}>
+      <div style={{ display: "flex", borderBottom: `1px solid ${withAlpha(T.accent, 0.08)}`, background: T.chrome }}>
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
-            padding: "10px 18px", background: tab === t.id ? "rgba(56,189,248,0.08)" : "transparent",
-            border: "none", borderBottom: tab === t.id ? "2px solid #38bdf8" : "2px solid transparent",
-            color: tab === t.id ? "#38bdf8" : "#64748b", fontSize: 11, fontWeight: 600, letterSpacing: 1.2,
+            padding: "10px 18px", background: tab === t.id ? withAlpha(T.accent, 0.08) : "transparent",
+            border: "none", borderBottom: tab === t.id ? `2px solid ${T.accent}` : "2px solid transparent",
+            color: tab === t.id ? T.accent : T.textSecondary, fontSize: 11, fontWeight: 600, letterSpacing: 1.2,
             cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s",
           }}>{t.label}</button>
         ))}

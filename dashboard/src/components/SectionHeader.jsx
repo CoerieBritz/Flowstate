@@ -1,3 +1,5 @@
+import { T, withAlpha } from "../lib/theme";
+
 // ════════════════════════════════════════════════════════════════════
 // ANALYTICS — shared helpers
 // ════════════════════════════════════════════════════════════════════
@@ -7,10 +9,10 @@ export function SectionHeader({ title, desc }) {
   return (
     <div style={{ marginBottom: 14 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", letterSpacing: 1.5, whiteSpace: "nowrap" }}>{title}</div>
-        <div style={{ flex: 1, height: 1, background: "rgba(56,189,248,0.10)" }} />
+        <div style={{ fontFamily: T.fontLabel, fontSize: 11, fontWeight: 700, color: T.textSecondary, letterSpacing: 1.5, whiteSpace: "nowrap" }}>{title}</div>
+        <div style={{ flex: 1, height: 1, background: withAlpha(T.accent, 0.10) }} />
       </div>
-      {desc && <div style={{ fontSize: 10, color: "#475569", marginTop: 5 }}>{desc}</div>}
+      {desc && <div style={{ fontSize: 11, color: T.textMuted, marginTop: 5 }}>{desc}</div>}
     </div>
   );
 }

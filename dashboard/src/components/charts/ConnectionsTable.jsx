@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { formatRate } from "../../lib/format";
+import { T, withAlpha } from "../../lib/theme";
 
 // Top connections — aggregated by (app, host, protocol), sortable
 export function ConnectionsTable({ connections, apps }) {
@@ -63,10 +64,10 @@ export function ConnectionsTable({ connections, apps }) {
   const Th = ({ field, children, align = "left" }) => (
     <th onClick={() => toggle(field)} style={{
       padding: "10px 12px", textAlign: align, cursor: "pointer", userSelect: "none",
-      fontSize: 9, letterSpacing: 1.2, fontWeight: 600, whiteSpace: "nowrap",
-      color: sortField === field ? "#38bdf8" : "#64748b",
-      borderBottom: "1px solid rgba(56,189,248,0.08)",
-      background: "rgba(56,189,248,0.04)",
+      fontSize: 11, letterSpacing: 1.2, fontWeight: 600, whiteSpace: "nowrap",
+      color: sortField === field ? T.accent : T.textSecondary,
+      borderBottom: `1px solid ${withAlpha(T.accent, 0.08)}`,
+      background: withAlpha(T.accent, 0.04),
       transition: "color 0.15s",
     }}>
       {children}{sortField === field ? (sortDir === "asc" ? " ↑" : " ↓") : ""}
@@ -74,11 +75,11 @@ export function ConnectionsTable({ connections, apps }) {
   );
 
   if (sorted.length === 0) {
-    return <div style={{ color: "#475569", fontSize: 12, padding: "20px 0" }}>Waiting for connection data…</div>;
+    return <div style={{ color: T.textMuted, fontSize: 12, padding: "20px 0" }}>Waiting for connection data…</div>;
   }
 
   return (
-    <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid rgba(56,189,248,0.08)" }}>
+    <div style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${withAlpha(T.accent, 0.08)}` }}>
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
         <thead>
           <tr>
@@ -94,13 +95,13 @@ export function ConnectionsTable({ connections, apps }) {
           {sorted.map((row, i) => (
             <tr key={row.key} style={{ background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.012)", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
               <td style={{ padding: "8px 12px", fontWeight: 600 }}>{row.app}</td>
-              <td style={{ padding: "8px 12px", color: "#38bdf8", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={row.host}>{row.host}</td>
+              <td style={{ padding: "8px 12px", color: T.accent, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={row.host}>{row.host}</td>
               <td style={{ padding: "8px 12px" }}>
-                <span style={{ padding: "2px 7px", borderRadius: 4, fontSize: 9, background: "rgba(139,92,246,0.12)", color: "#a78bfa", letterSpacing: 0.5 }}>{row.protocol}</span>
+                <span style={{ fontFamily: T.fontLabel, padding: "2px 7px", borderRadius: 4, fontSize: 11, background: "rgba(139,92,246,0.12)", color: "#a78bfa", letterSpacing: 0.5 }}>{row.protocol}</span>
               </td>
-              <td style={{ padding: "8px 12px", textAlign: "right", color: "#38bdf8", fontVariantNumeric: "tabular-nums" }}>{formatRate(row.recv)}</td>
-              <td style={{ padding: "8px 12px", textAlign: "right", color: "#fb923c", fontVariantNumeric: "tabular-nums" }}>{formatRate(row.sent)}</td>
-              <td style={{ padding: "8px 12px", textAlign: "right", color: "#64748b", fontVariantNumeric: "tabular-nums" }}>{fmtDur(row.duration)}</td>
+              <td style={{ padding: "8px 12px", textAlign: "right", color: T.download, fontVariantNumeric: "tabular-nums" }}>{formatRate(row.recv)}</td>
+              <td style={{ padding: "8px 12px", textAlign: "right", color: T.upload, fontVariantNumeric: "tabular-nums" }}>{formatRate(row.sent)}</td>
+              <td style={{ padding: "8px 12px", textAlign: "right", color: T.textSecondary, fontVariantNumeric: "tabular-nums" }}>{fmtDur(row.duration)}</td>
             </tr>
           ))}
         </tbody>

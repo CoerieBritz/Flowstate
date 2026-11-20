@@ -3,6 +3,7 @@ import { sankey, sankeyLinkHorizontal } from "d3-sankey";
 import { useContainerWidth } from "../../hooks/useContainerWidth";
 import { PALETTE } from "../../lib/colors";
 import { formatRate } from "../../lib/format";
+import { T } from "../../lib/theme";
 
 // ════════════════════════════════════════════════════════════════════
 // SANKEY CHART
@@ -63,14 +64,14 @@ export function SankeyChart({ apps, connections }) {
   return (
     <div ref={containerRef} style={{ width: "100%", overflow: "visible" }}>
       {!rendered ? (
-        <div style={{ height: HEIGHT, display: "flex", alignItems: "center", justifyContent: "center", color: "#475569", fontSize: 12 }}>
+        <div style={{ height: HEIGHT, display: "flex", alignItems: "center", justifyContent: "center", color: T.textMuted, fontSize: 12 }}>
           {connections.length === 0 ? "Waiting for connection data…" : "No traffic flow data yet — flows appear once apps have active connections."}
         </div>
       ) : (
         <svg width={containerWidth} height={HEIGHT} style={{ display: "block", overflow: "visible" }}>
           {/* Flow links */}
           {rendered.links.map((link, i) => {
-            const color = appColorMap.get(link.source.name) || "#38bdf8";
+            const color = appColorMap.get(link.source.name) || T.accent;
             return (
               <path key={i} d={sankeyLinkHorizontal()(link)} fill="none"
                 stroke={color} strokeWidth={Math.max(1.5, link.width)} strokeOpacity={0.30}>
@@ -81,7 +82,7 @@ export function SankeyChart({ apps, connections }) {
           {/* Nodes */}
           {rendered.nodes.map((node, i) => {
             const isApp = node.side === "app";
-            const color = isApp ? (appColorMap.get(node.name) || "#38bdf8") : "#94a3b8";
+            const color = isApp ? (appColorMap.get(node.name) || T.accent) : T.textSecondary;
             const nodeH = Math.max(3, node.y1 - node.y0);
             const midY = (node.y0 + node.y1) / 2;
             // Dynamic char limit: approx 6px per char at 10px monospace
@@ -100,13 +101,13 @@ export function SankeyChart({ apps, connections }) {
                   y={midY}
                   textAnchor={isApp ? "end" : "start"}
                   dominantBaseline="middle"
-                  fill={color} fontSize={10} fontFamily="monospace">
+                  fill={color} fontSize={11} fontFamily="monospace">
                   {displayLabel}
                 </text>
                 {/* Show rate for destination nodes when there's room */}
                 {!isApp && nodeH >= 18 && (
                   <text x={node.x1 + 10} y={midY + 13}
-                    textAnchor="start" fontSize={8} fill={`${color}88`} fontFamily="monospace">
+                    textAnchor="start" fontSize={11} fill={`${color}88`} fontFamily="monospace">
                     {formatRate(node.value || 0)}
                   </text>
                 )}
@@ -120,7 +121,7 @@ export function SankeyChart({ apps, connections }) {
       {tooltip && (
         <div style={{
           position: "fixed", left: tooltip.x + 14, top: tooltip.y - 10,
-          background: "#0f1422", border: `1px solid ${tooltip.color}44`,
+          background: T.inset, border: `1px solid ${tooltip.color}44`,
           borderRadius: 8, padding: "8px 12px", fontSize: 11,
           pointerEvents: "none", zIndex: 9999,
           boxShadow: "0 4px 20px rgba(0,0,0,0.7)", minWidth: 180,
@@ -128,8 +129,8 @@ export function SankeyChart({ apps, connections }) {
           <div style={{ fontWeight: 700, color: tooltip.color, marginBottom: 5, wordBreak: "break-all" }}>
             {tooltip.node.name}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 10, color: "#94a3b8" }}>
-            <div>Type: <span style={{ color: "#e2e8f0" }}>{tooltip.node.side === "app" ? "Application" : "Destination"}</span></div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 11, color: T.textSecondary }}>
+            <div>Type: <span style={{ color: T.text }}>{tooltip.node.side === "app" ? "Application" : "Destination"}</span></div>
             <div>Bandwidth: <span style={{ color: tooltip.color, fontWeight: 600 }}>{formatRate(tooltip.node.value || 0)}</span></div>
           </div>
         </div>

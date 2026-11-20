@@ -5,6 +5,7 @@ import {
 } from "d3-force";
 import { useContainerWidth } from "../../hooks/useContainerWidth";
 import { formatRate } from "../../lib/format";
+import { T, withAlpha } from "../../lib/theme";
 
 // ════════════════════════════════════════════════════════════════════
 // NETWORK MAP — d3-force with stable simulation
@@ -12,8 +13,8 @@ import { formatRate } from "../../lib/format";
 
 // Node visual properties
 const NODE_COLOR = {
-  gateway: "#f59e0b", this_pc: "#38bdf8", internet: "#a78bfa",
-  phone: "#4ade80", printer: "#fb923c", tv: "#e879f9", pc: "#64748b",
+  gateway: "#f59e0b", this_pc: T.accent, internet: "#a78bfa",
+  phone: T.success, printer: T.orange, tv: "#e879f9", pc: T.textSecondary,
 };
 
 const getNodeColor = (type) => NODE_COLOR[type] || NODE_COLOR.pc;
@@ -228,7 +229,7 @@ export function NetworkMap({ gateway, localIp, lanDevices, connections, apps }) 
   const lanNodeCount = renderNodes.filter((n) => n.type !== "internet" && n.type !== "gateway").length;
 
   const zones = [
-    { x: 0,         w: W * 0.33, label: "LAN",      fill: "rgba(56,189,248,0.025)",  border: "rgba(56,189,248,0.08)"  },
+    { x: 0,         w: W * 0.33, label: "LAN",      fill: withAlpha(T.accent, 0.025),  border: withAlpha(T.accent, 0.08)  },
     { x: W * 0.33,  w: W * 0.34, label: "GATEWAY",  fill: "rgba(245,158,11,0.030)",  border: "rgba(245,158,11,0.08)"  },
     { x: W * 0.67,  w: W * 0.33, label: "INTERNET", fill: "rgba(167,139,250,0.025)", border: "rgba(167,139,250,0.08)" },
   ];
@@ -236,12 +237,12 @@ export function NetworkMap({ gateway, localIp, lanDevices, connections, apps }) 
   return (
     <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
       {renderNodes.length === 0 ? (
-        <div style={{ height: H, display: "flex", alignItems: "center", justifyContent: "center", color: "#475569", fontSize: 12, background: "#080d18", borderRadius: 8 }}>
+        <div style={{ height: H, display: "flex", alignItems: "center", justifyContent: "center", color: T.textMuted, fontSize: 12, background: T.panel, borderRadius: 8 }}>
           {!gateway ? "Waiting for topology data from backend… (requires flowstate_backend.py)" : "Building network map…"}
         </div>
       ) : (
         <>
-          <svg width={W} height={H} style={{ display: "block", borderRadius: 8, background: "#080d18", overflow: "visible" }}>
+          <svg width={W} height={H} style={{ display: "block", borderRadius: 8, background: T.panel, overflow: "visible" }}>
             {/* Zone backgrounds */}
             {zones.map((z) => (
               <g key={z.label}>
@@ -249,7 +250,7 @@ export function NetworkMap({ gateway, localIp, lanDevices, connections, apps }) 
                 <line x1={z.x} y1={0} x2={z.x} y2={H} stroke={z.border} strokeWidth={1} />
                 <text x={z.x + z.w / 2} y={22} textAnchor="middle"
                   fill={z.border.replace("0.08", "0.55")}
-                  fontSize={9} fontFamily="monospace" letterSpacing={2}>{z.label}</text>
+                  fontSize={11} fontFamily="monospace" letterSpacing={2}>{z.label}</text>
               </g>
             ))}
 
@@ -260,7 +261,7 @@ export function NetworkMap({ gateway, localIp, lanDevices, connections, apps }) 
               if (!src || !tgt || src.x == null || tgt.x == null) return null;
               const cnt = link.kind === "internet" ? (connCounts.get(tgt.id) || link.count || 1) : 1;
               const sw = link.kind === "internet" ? Math.max(1, Math.log(cnt + 1) * 1.8) : 1.5;
-              const stroke = link.kind === "internet" ? "rgba(167,139,250,0.35)" : "rgba(56,189,248,0.30)";
+              const stroke = link.kind === "internet" ? "rgba(167,139,250,0.35)" : withAlpha(T.accent, 0.30);
               const mx = (src.x + tgt.x) / 2;
               const my = (src.y + tgt.y) / 2;
               const bw = link.kind === "internet" ? inetBandwidth.get(tgt.id) : null;
@@ -269,7 +270,7 @@ export function NetworkMap({ gateway, localIp, lanDevices, connections, apps }) 
                 <g key={link.id || i}>
                   <line x1={src.x} y1={src.y} x2={tgt.x} y2={tgt.y} stroke={stroke} strokeWidth={sw} strokeLinecap="round" />
                   {bwLabel && (
-                    <text x={mx} y={my - 5} textAnchor="middle" fontSize={8} fill="rgba(167,139,250,0.7)" fontFamily="monospace" style={{ pointerEvents: "none" }}>{bwLabel}</text>
+                    <text x={mx} y={my - 5} textAnchor="middle" fontSize={11} fill="rgba(167,139,250,0.7)" fontFamily="monospace" style={{ pointerEvents: "none" }}>{bwLabel}</text>
                   )}
                 </g>
               );
@@ -320,14 +321,14 @@ export function NetworkMap({ gateway, localIp, lanDevices, connections, apps }) 
                     {getNodeAbbr(node.type)}
                   </text>
                   {/* Label */}
-                  <text textAnchor="middle" y={node.r + 13} fontSize={9}
+                  <text textAnchor="middle" y={node.r + 13} fontSize={11}
                     fill={color} fontFamily="monospace"
                     style={{ pointerEvents: "none", userSelect: "none" }}>
                     {shortLabel}
                   </text>
                   {/* Bandwidth sub-label */}
                   {bwStr && (
-                    <text textAnchor="middle" y={node.r + 24} fontSize={8}
+                    <text textAnchor="middle" y={node.r + 24} fontSize={11}
                       fill={`${color}99`} fontFamily="monospace"
                       style={{ pointerEvents: "none", userSelect: "none" }}>
                       {bwStr}
@@ -341,37 +342,37 @@ export function NetworkMap({ gateway, localIp, lanDevices, connections, apps }) 
           {/* Mini stats panel (top-right overlay) */}
           <div style={{
             position: "absolute", top: 12, right: 12,
-            background: "rgba(8,13,24,0.92)", border: "1px solid rgba(56,189,248,0.15)",
-            borderRadius: 8, padding: "10px 14px", fontSize: 10, minWidth: 170,
+            background: "rgba(8,13,24,0.92)", border: `1px solid ${withAlpha(T.accent, 0.15)}`,
+            borderRadius: 8, padding: "10px 14px", fontSize: 11, minWidth: 170,
             backdropFilter: "blur(4px)",
           }}>
-            <div style={{ fontSize: 9, letterSpacing: 1.5, color: "#475569", marginBottom: 8, fontWeight: 600 }}>NETWORK STATS</div>
+            <div style={{ fontFamily: T.fontLabel, fontSize: 11, letterSpacing: 1.5, color: T.textMuted, marginBottom: 8, fontWeight: 600 }}>NETWORK STATS</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#64748b" }}>LAN Devices</span>
-                <span style={{ color: "#38bdf8", fontWeight: 600 }}>{lanNodeCount}</span>
+                <span style={{ color: T.textSecondary }}>LAN Devices</span>
+                <span style={{ color: T.accent, fontWeight: 600 }}>{lanNodeCount}</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#64748b" }}>Internet Dests</span>
+                <span style={{ color: T.textSecondary }}>Internet Dests</span>
                 <span style={{ color: "#a78bfa", fontWeight: 600 }}>{inetNodeCount}</span>
               </div>
-              <div style={{ height: 1, background: "rgba(56,189,248,0.08)", margin: "2px 0" }} />
+              <div style={{ height: 1, background: withAlpha(T.accent, 0.08), margin: "2px 0" }} />
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#64748b" }}>↓ Download</span>
-                <span style={{ color: "#38bdf8", fontWeight: 600 }}>{formatRate(totalRecvRate)}</span>
+                <span style={{ color: T.textSecondary }}>↓ Download</span>
+                <span style={{ color: T.download, fontWeight: 600 }}>{formatRate(totalRecvRate)}</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#64748b" }}>↑ Upload</span>
-                <span style={{ color: "#fb923c", fontWeight: 600 }}>{formatRate(totalSentRate)}</span>
+                <span style={{ color: T.textSecondary }}>↑ Upload</span>
+                <span style={{ color: T.upload, fontWeight: 600 }}>{formatRate(totalSentRate)}</span>
               </div>
               {topTalker && (
                 <>
-                  <div style={{ height: 1, background: "rgba(56,189,248,0.08)", margin: "2px 0" }} />
-                  <div style={{ color: "#64748b", fontSize: 9 }}>Top Talker</div>
-                  <div style={{ color: "#e2e8f0", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div style={{ height: 1, background: withAlpha(T.accent, 0.08), margin: "2px 0" }} />
+                  <div style={{ color: T.textSecondary, fontSize: 11 }}>Top Talker</div>
+                  <div style={{ color: T.text, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {topTalker.icon} {topTalker.name}
                   </div>
-                  <div style={{ color: "#94a3b8", fontSize: 9 }}>
+                  <div style={{ color: T.textSecondary, fontSize: 11 }}>
                     {formatRate(topTalker.recv + topTalker.sent)} total
                   </div>
                 </>
@@ -387,7 +388,7 @@ export function NetworkMap({ gateway, localIp, lanDevices, connections, apps }) 
           position: "absolute",
           left: Math.min(tooltip.x + 14, W - 210),
           top: Math.max(tooltip.y - 10, 8),
-          background: "#0f1422",
+          background: T.inset,
           border: `1px solid ${getNodeColor(tooltip.node.type)}44`,
           borderRadius: 8, padding: "8px 12px", fontSize: 11,
           pointerEvents: "none", zIndex: 100, minWidth: 180, maxWidth: 250,
@@ -396,28 +397,28 @@ export function NetworkMap({ gateway, localIp, lanDevices, connections, apps }) 
           <div style={{ fontWeight: 700, color: getNodeColor(tooltip.node.type), marginBottom: 6, fontSize: 12 }}>
             {tooltip.node.hostname || tooltip.node.label}
           </div>
-          <div style={{ color: "#94a3b8", lineHeight: 1.8, fontSize: 10 }}>
-            {tooltip.node.ip && <div>IP: <span style={{ color: "#e2e8f0" }}>{tooltip.node.ip}</span></div>}
-            {tooltip.node.mac && tooltip.node.mac !== "" && <div>MAC: <span style={{ color: "#e2e8f0" }}>{tooltip.node.mac}</span></div>}
+          <div style={{ color: T.textSecondary, lineHeight: 1.8, fontSize: 11 }}>
+            {tooltip.node.ip && <div>IP: <span style={{ color: T.text }}>{tooltip.node.ip}</span></div>}
+            {tooltip.node.mac && tooltip.node.mac !== "" && <div>MAC: <span style={{ color: T.text }}>{tooltip.node.mac}</span></div>}
             {tooltip.bw && (tooltip.bw.recv + tooltip.bw.sent) > 0 && (
-              <div>Bandwidth: <span style={{ color: "#38bdf8" }}>↓{formatRate(tooltip.bw.recv)}</span> <span style={{ color: "#fb923c" }}>↑{formatRate(tooltip.bw.sent)}</span></div>
+              <div>Bandwidth: <span style={{ color: T.download }}>↓{formatRate(tooltip.bw.recv)}</span> <span style={{ color: T.upload }}>↑{formatRate(tooltip.bw.sent)}</span></div>
             )}
-            {tooltip.node.count > 0 && <div>Connections: <span style={{ color: "#e2e8f0" }}>{tooltip.node.count}</span></div>}
-            {tooltip.node.apps && tooltip.node.apps.length > 0 && <div>Apps: <span style={{ color: "#e2e8f0" }}>{tooltip.node.apps.slice(0, 4).join(", ")}</span></div>}
-            <div style={{ marginTop: 4, color: "#334155", fontSize: 9, letterSpacing: 0.5 }}>{tooltip.node.type.toUpperCase().replace("_", " ")}</div>
+            {tooltip.node.count > 0 && <div>Connections: <span style={{ color: T.text }}>{tooltip.node.count}</span></div>}
+            {tooltip.node.apps && tooltip.node.apps.length > 0 && <div>Apps: <span style={{ color: T.text }}>{tooltip.node.apps.slice(0, 4).join(", ")}</span></div>}
+            <div style={{ fontFamily: T.fontLabel, marginTop: 4, color: "#334155", fontSize: 11, letterSpacing: 0.5 }}>{tooltip.node.type.toUpperCase().replace("_", " ")}</div>
           </div>
         </div>
       )}
 
       {/* Legend */}
-      <div style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap", fontSize: 10, color: "#64748b" }}>
-        {Object.entries({ "This PC": "#38bdf8", "Gateway": "#f59e0b", "LAN Device": "#64748b", "Phone": "#4ade80", "Internet Dest": "#a78bfa" }).map(([label, color]) => (
+      <div style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap", fontSize: 11, color: T.textSecondary }}>
+        {Object.entries({ "This PC": T.accent, "Gateway": "#f59e0b", "LAN Device": T.textSecondary, "Phone": T.success, "Internet Dest": "#a78bfa" }).map(([label, color]) => (
           <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: color, boxShadow: `0 0 4px ${color}` }} />
             {label}
           </div>
         ))}
-        <div style={{ marginLeft: "auto", color: "#334155", fontSize: 9 }}>
+        <div style={{ marginLeft: "auto", color: "#334155", fontSize: 11 }}>
           Drag to rearrange · Line thickness = connection count
         </div>
       </div>
