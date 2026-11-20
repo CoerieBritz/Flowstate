@@ -8,11 +8,13 @@ import { AppHeader } from "./components/AppHeader";
 import { ConfirmModal } from "./components/ConfirmModal";
 import { GlobalStyles } from "./components/GlobalStyles";
 import { StatusBanner } from "./components/StatusBanner";
+import { TabNav } from "./components/TabNav";
 import { ThreatIntelPanel } from "./components/ThreatIntelPanel";
 import { ToastContainer } from "./components/ToastContainer";
 import { useContainerWidth } from "./hooks/useContainerWidth";
 import { getAppIcon } from "./lib/format";
-import { T, withAlpha } from "./lib/theme";
+import { groupOfTab } from "./lib/nav";
+import { T } from "./lib/theme";
 import { getWsToken, WS_URL } from "./lib/ws";
 import { AlertsTab } from "./tabs/AlertsTab";
 import { AnalyticsTab } from "./tabs/AnalyticsTab";
@@ -30,6 +32,8 @@ import { TrafficTab } from "./tabs/TrafficTab";
 // ════════════════════════════════════════════════════════════════════
 export default function NetMonitor() {
   const [tab, setTab] = useState("graph");
+  // Last-opened sub-tab per nav group, so returning to a group restores it.
+  const [lastTabByGroup, setLastTabByGroup] = useState({ monitor: "graph", network: "map", soar: "alerts" });
   const [history, setHistory] = useState([]);               // { sent, recv, time }
   const [apps, setApps] = useState([]);
   const [appHistory, setAppHistory] = useState({});         // 300 s per-app recv history
@@ -310,18 +314,20 @@ export default function NetMonitor() {
   const openIncidentCount = incidents.filter((i) => i.status === "OPEN").length;
 
 
-  const tabs = [
-    { id: "graph",       label: "📈 TRAFFIC" },
-    { id: "analytics",   label: "📊 ANALYTICS" },
-    { id: "map",         label: "🗺️ MAP" },
-    { id: "firewall",    label: "🛡️ FIREWALL" },
-    { id: "connections", label: "🔗 CONNECTIONS" },
-    { id: "alerts",      label: `🔔 ALERTS${alerts.filter((a) => a.severity !== "info").length ? ` (${alerts.filter((a) => a.severity !== "info").length})` : ""}` },
-    { id: "incidents",   label: `🚨 INCIDENTS${openIncidentCount ? ` (${openIncidentCount})` : ""}` },
-    { id: "playbooks",   label: `📋 PLAYBOOKS${playbooks.length ? ` (${playbooks.length})` : ""}` },
-    { id: "audit",       label: `🗒️ AUDIT${auditLog.length ? ` (${auditLog.length})` : ""}` },
-    { id: "settings",    label: "⚙️ SETTINGS" },
-  ];
+  // ── Navigation ──────────────────────────────────────────────────────
+  const selectTab = (id) => {
+    setTab(id);
+    const g = groupOfTab(id);
+    if (g) setLastTabByGroup((prev) => ({ ...prev, [g]: id }));
+  };
+  const selectGroup = (g) => setTab(lastTabByGroup[g]);
+  const navCounts = {
+    alerts:        alerts.filter((a) => a.severity !== "info").length,
+    incidents:     openIncidentCount,
+    playbooks:     playbooks.length,
+    audit:         auditLog.length,
+    openIncidents: openIncidentCount,
+  };
 
   return (
     <div style={{ fontFamily: T.fontMono, background: T.bg, color: T.text, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -332,16 +338,7 @@ export default function NetMonitor() {
       <StatusBanner status={wsStatus} />
 
       {/* ── TAB BAR ───────────────────────────────────────────────── */}
-      <div style={{ display: "flex", borderBottom: `1px solid ${withAlpha(T.accent, 0.08)}`, background: T.chrome }}>
-        {tabs.map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{
-            padding: "10px 18px", background: tab === t.id ? withAlpha(T.accent, 0.08) : "transparent",
-            border: "none", borderBottom: tab === t.id ? `2px solid ${T.accent}` : "2px solid transparent",
-            color: tab === t.id ? T.accent : T.textSecondary, fontSize: 11, fontWeight: 600, letterSpacing: 1.2,
-            cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s",
-          }}>{t.label}</button>
-        ))}
-      </div>
+      <TabNav tab={tab} onSelectTab={selectTab} onSelectGroup={selectGroup} counts={navCounts} />
 
       <div style={{ flex: 1, padding: 20, overflow: "auto" }}>
 
