@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b2847"/>
+      <stop offset="1" stop-color="#0a1226"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="0.55" stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+    <linearGradient id="flow" gradientUnits="userSpaceOnUse" x1="380" y1="760" x2="760" y2="300">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="0.5" stop-color="#5eead4"/>
+      <stop offset="1" stop-color="#7dd3fc"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="18" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softglow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Tile -->
+  <rect x="48" y="48" width="928" height="928" rx="210" fill="url(#tile)"/>
+  <rect x="48" y="48" width="928" height="928" rx="210" fill="none" stroke="#ffffff" stroke-opacity="0.14" stroke-width="6"/>
+
+  <!-- Orbit ring: two open arcs with nodes -->
+  <g filter="url(#softglow)" fill="none" stroke="url(#ring)" stroke-width="30" stroke-linecap="round">
+    <!-- left arc (from ~top to ~bottom-left) -->
+    <path d="M 470 196 A 318 318 0 0 0 268 712"/>
+    <!-- right arc (from ~right-top to ~bottom) -->
+    <path d="M 792 360 A 318 318 0 0 1 560 826"/>
+  </g>
+  <g filter="url(#softglow)">
+    <circle cx="470" cy="196" r="34" fill="#3b82f6"/>
+    <circle cx="196" cy="512" r="34" fill="#3b82f6"/>
+    <circle cx="829" cy="512" r="34" fill="#93c5fd"/>
+    <circle cx="560" cy="826" r="34" fill="#a78bfa"/>
+  </g>
+
+  <!-- Flowing "F" -->
+  <g filter="url(#glow)" fill="none" stroke="url(#flow)" stroke-linecap="round" stroke-linejoin="round" stroke-width="72">
+    <!-- stem + top bar -->
+    <path d="M 392 742 C 392 560 430 420 520 352 C 600 292 700 286 752 318"/>
+    <!-- middle bar -->
+    <path d="M 400 590 C 490 540 560 592 644 528"/>
+  </g>
+  <g filter="url(#softglow)">
+    <circle cx="392" cy="742" r="44" fill="#60a5fa"/>
+    <circle cx="644" cy="528" r="44" fill="#7dd3fc"/>
+    <circle cx="392" cy="742" r="18" fill="#0a1226"/>
+    <circle cx="644" cy="528" r="18" fill="#0a1226"/>
+  </g>
+</svg>
