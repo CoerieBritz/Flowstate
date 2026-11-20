@@ -3318,7 +3318,7 @@ function PlaybooksTab({
 }
 
 // ════════════════════════════════════════════════════════════════════
-// SETTINGS TAB — begins below (SIEM tab removed)
+// SETTINGS TAB — begins below
 // ════════════════════════════════════════════════════════════════════
 
 // ════════════════════════════════════════════════════════════════════
@@ -3405,7 +3405,6 @@ function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsReady }) {
   const ti        = draft.threat_intel  || {};
   const alerts    = draft.alerts        || {};
   const display   = draft.display       || {};
-  const retention = draft.retention     || {};
   const feeds     = soarStats?.feeds    || [];
 
   return (
@@ -3521,50 +3520,6 @@ function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsReady }) {
           </SettingsField>
         </div>
         <SaveRow onSave={() => handleSave("display")} wsReady={wsReady} saving={saving} />
-      </SettingsSection>
-
-      {/* ── Data Retention ───────────────────────────────────────── */}
-      <SettingsSection title="DATA RETENTION">
-        <div style={{ fontSize: 11, color: "#64748b", marginBottom: 14, lineHeight: 1.7 }}>
-          Configure how long historical data is kept in{" "}
-          <code style={{ color: "#38bdf8", fontSize: 10 }}>data/history.db</code>.
-          Cleanup runs on startup and then every 24 hours.
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <SettingsField label="Connection history (days)" hint="default 30">
-            <input
-              type="number" min={1} max={365}
-              value={retention.connection_history_days ?? 30}
-              onChange={(e) => set("retention", "connection_history_days", Number(e.target.value))}
-              style={INPUT_STYLE}
-            />
-          </SettingsField>
-          <SettingsField label="Security event log (days)" hint="default 90">
-            <input
-              type="number" min={1} max={365}
-              value={retention.event_log_days ?? 90}
-              onChange={(e) => set("retention", "event_log_days", Number(e.target.value))}
-              style={INPUT_STYLE}
-            />
-          </SettingsField>
-          <SettingsField label="Traffic log (days)" hint="default 30">
-            <input
-              type="number" min={1} max={365}
-              value={retention.traffic_log_days ?? 30}
-              onChange={(e) => set("retention", "traffic_log_days", Number(e.target.value))}
-              style={INPUT_STYLE}
-            />
-          </SettingsField>
-          <SettingsField label="Alerts log (days)" hint="default 90">
-            <input
-              type="number" min={1} max={365}
-              value={retention.alerts_days ?? 90}
-              onChange={(e) => set("retention", "alerts_days", Number(e.target.value))}
-              style={INPUT_STYLE}
-            />
-          </SettingsField>
-        </div>
-        <SaveRow onSave={() => handleSave("retention")} wsReady={wsReady} saving={saving} />
       </SettingsSection>
 
       {/* ── Feed Management ──────────────────────────────────────── */}
@@ -3798,7 +3753,6 @@ export default function NetMonitor() {
     threat_intel: { virustotal_api_key: "", abuseipdb_api_key: "", auto_lookup_flagged: true, cache_ttl_hours: 24 },
     alerts:       { bandwidth_threshold_mb: 100, poll_interval_seconds: 1 },
     display:      { max_connections_shown: 100, max_apps_shown: 30 },
-    retention:    { connection_history_days: 30, event_log_days: 90, traffic_log_days: 30, alerts_days: 90 },
   });
   const [newBlocklistIp, setNewBlocklistIp] = useState("");
   const [searchFilter, setSearchFilter] = useState("");

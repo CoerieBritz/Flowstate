@@ -147,7 +147,6 @@ WS_PORT = 8765
 POLL_INTERVAL = 1.0           # seconds between network polls (overridden by settings)
 ARP_SCAN_INTERVAL = 30.0      # seconds between ARP / gateway re-scans
 ALERT_BANDWIDTH_THRESHOLD = 100 * 1024 * 1024   # 100 MB/hour per app
-MAX_HISTORY_DAYS = 30
 
 # === PATHS ===================================================================
 # _DATA_DIR is set from --data-dir if supplied (Tauri sets %APPDATA%\com.coerie.flowstate),
@@ -218,12 +217,6 @@ DEFAULT_SETTINGS: dict = {
     "display": {
         "max_connections_shown": 100,
         "max_apps_shown":        30,
-    },
-    "retention": {
-        "connection_history_days": 30,
-        "event_log_days":          90,
-        "traffic_log_days":        30,
-        "alerts_days":             90,
     },
 }
 
