@@ -115,7 +115,7 @@ The backend polls every second (configurable), evaluates all SOAR modules in seq
 
 - **Python 3.12+** — [python.org](https://www.python.org/downloads/)
 - **Node.js 18+** — [nodejs.org](https://nodejs.org/)
-- **Windows** — the backend uses `psutil` and `netsh` for Windows firewall integration. Linux/macOS support is available via `flowstate_backend.py` but response actions (block/kill) are platform-specific.
+- **Windows** — the backend uses `psutil` and `netsh` for Windows firewall integration. Linux/macOS are not currently supported.
 
 ### Install
 
@@ -135,13 +135,7 @@ cd ..
 
 ### Run
 
-**Windows (recommended) — double-click or run from an elevated prompt:**
-
-```bat
-start_windows.bat
-```
-
-This script self-elevates to Administrator, installs any missing dependencies, and opens the backend and Vite dev server in separate console windows.
+**Desktop app (Tauri dev mode):** run `build_backend.bat` once, then `build_dev.bat`. The app starts the backend itself.
 
 **Manual start — two terminals:**
 
@@ -152,12 +146,6 @@ python flowstate_backend.py
 # Terminal 2 — dashboard
 cd dashboard
 npm run dev
-```
-
-**Linux / macOS:**
-
-```bash
-bash start.sh
 ```
 
 Then open **http://localhost:5173** in your browser.

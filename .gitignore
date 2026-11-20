@@ -31,13 +31,15 @@ Thumbs.db
 .idea/
 
 # Build artifacts
+# Compiled backend sidecar (built by build_backend.bat; keep the folder via .gitkeep)
+dashboard/src-tauri/binaries/*
+!dashboard/src-tauri/binaries/.gitkeep
 build/
 dist/
 dashboard/src-tauri/target/
 dashboard/dist/
 *.spec
 *.exe
-!START_NETWATCH.bat
 !build_backend.bat
 !build_release.bat
 !build_dev.bat
