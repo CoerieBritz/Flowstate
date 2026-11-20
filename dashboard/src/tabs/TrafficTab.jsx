@@ -1,5 +1,5 @@
 import { formatRateDetailed } from "../lib/format";
-import { T, withAlpha } from "../lib/theme";
+import { PANEL, T, withAlpha } from "../lib/theme";
 import { AppBandwidthBarsWithDrillIn } from "../components/charts/AppBandwidthBarsWithDrillIn";
 import { GlobalConnectionMap } from "../components/charts/GlobalConnectionMap";
 import { TrafficGraph } from "../components/charts/TrafficGraph";
@@ -65,7 +65,7 @@ export function TrafficTab({ history, apps, blockedApps, connections, soarStats,
       </div>
 
       {/* Real-time traffic graph */}
-      <div ref={graphContainerRef} style={{ borderRadius: 10, border: `1px solid ${withAlpha(T.accent, 0.08)}`, background: T.panel, padding: 16, marginBottom: 16 }}>
+      <div ref={graphContainerRef} style={{ ...PANEL, padding: 16, marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
           <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1 }}>REAL-TIME TRAFFIC <span style={{ color: T.textMuted, fontWeight: 400 }}>(last 2 min)</span></div>
           <div style={{ display: "flex", gap: 16, fontSize: 11 }}>
@@ -77,7 +77,7 @@ export function TrafficTab({ history, apps, blockedApps, connections, soarStats,
       </div>
 
       {/* Per-app bandwidth bars with drill-in */}
-      <div style={{ borderRadius: 10, border: `1px solid ${withAlpha(T.accent, 0.08)}`, background: T.panel, padding: 16, marginBottom: 16 }}>
+      <div style={{ ...PANEL, padding: 16, marginBottom: 16 }}>
         <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1, marginBottom: 12 }}>
           TOP APPS BY BANDWIDTH <span style={{ color: T.textMuted, fontWeight: 400 }}>(per app · cyan = download, violet = upload)</span>
         </div>
@@ -91,7 +91,7 @@ export function TrafficTab({ history, apps, blockedApps, connections, soarStats,
       </div>
 
       {/* Global connection map */}
-      <div style={{ borderRadius: 10, border: `1px solid ${withAlpha(T.accent, 0.08)}`, background: T.panel, padding: 16, marginBottom: 0 }}>
+      <div style={{ ...PANEL, padding: 16, marginBottom: 0 }}>
         <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1, marginBottom: 12 }}>
           GLOBAL CONNECTION MAP <span style={{ color: T.textMuted, fontWeight: 400 }}>(dot size = bandwidth · hover for details · click to inspect)</span>
         </div>

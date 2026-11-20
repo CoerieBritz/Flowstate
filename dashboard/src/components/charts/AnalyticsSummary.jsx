@@ -36,7 +36,7 @@ export function AnalyticsSummary({ apps, connections }) {
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
       {cards.map((c) => (
         <div key={c.label} title={c.title} style={{
-          padding: "14px 16px", borderRadius: 10,
+          padding: "14px 16px", borderRadius: T.radius,
           background: `${c.color}0d`, border: `1px solid ${c.color}22`,
         }}>
           <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1.5, marginBottom: 6 }}>{c.label}</div>

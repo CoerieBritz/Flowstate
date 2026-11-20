@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { formatRate } from "../../lib/format";
-import { T, withAlpha } from "../../lib/theme";
+import { PANEL, T, withAlpha } from "../../lib/theme";
 
 // Top connections — aggregated by (app, host, protocol), sortable
 export function ConnectionsTable({ connections, apps }) {
@@ -79,8 +79,8 @@ export function ConnectionsTable({ connections, apps }) {
   }
 
   return (
-    <div style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${withAlpha(T.accent, 0.08)}` }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+    <div style={{ ...PANEL, overflow: "clip" }}>
+      <table className="fs-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
         <thead>
           <tr>
             <Th field="app">App</Th>

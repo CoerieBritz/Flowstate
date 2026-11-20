@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { INPUT_STYLE } from "../lib/styles";
-import { T, withAlpha } from "../lib/theme";
+import { PANEL, T, withAlpha } from "../lib/theme";
 
 // ════════════════════════════════════════════════════════════════════
 // SETTINGS TAB — begins below
@@ -14,8 +14,7 @@ const FLOWSTATE_VERSION = "1.0.0";
 function SettingsSection({ title, children }) {
   return (
     <div style={{
-      marginBottom: 24, padding: "20px 24px", borderRadius: 12,
-      background: "rgba(255,255,255,0.02)", border: `1px solid ${withAlpha(T.accent, 0.08)}`,
+      marginBottom: 24, padding: "20px 24px", ...PANEL,
     }}>
       <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 2, marginBottom: 16, fontWeight: 700 }}>
         {title}
@@ -222,8 +221,8 @@ export function SettingsTab({ settings, soarStats, onSave, onRefreshFeeds, wsRea
             </div>
 
             {feeds.length > 0 && (
-              <div style={{ borderRadius: 8, overflow: "hidden", border: `1px solid ${withAlpha(T.accent, 0.08)}`, marginBottom: 14 }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+              <div style={{ ...PANEL, overflow: "clip", marginBottom: 14 }}>
+                <table className="fs-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
                     <tr style={{ background: withAlpha(T.accent, 0.04) }}>
                       {["Feed", "Indicators", "Type", "Last Updated"].map((h) => (

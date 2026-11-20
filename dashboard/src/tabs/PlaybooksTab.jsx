@@ -116,7 +116,7 @@ export function PlaybooksTab({
       {/* ── Confirm delete ───────────────────────────────────────────── */}
       {confirmDelete && (
         <div style={{
-          marginBottom: 16, padding: "14px 18px", borderRadius: 10,
+          marginBottom: 16, padding: "14px 18px", borderRadius: T.radius,
           background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.25)",
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
@@ -159,9 +159,9 @@ export function PlaybooksTab({
 
             return (
               <div key={pb.name} style={{
-                borderRadius: 10, overflow: "hidden",
-                border: `1px solid ${isExpanded ? withAlpha(T.accent, 0.2) : "rgba(255,255,255,0.05)"}`,
-                background: isExpanded ? withAlpha(T.accent, 0.03) : "rgba(255,255,255,0.01)",
+                borderRadius: T.radius, overflow: "hidden",
+                border: `1px solid ${isExpanded ? withAlpha(T.accent, 0.3) : T.panelBorder}`,
+                background: isExpanded ? `linear-gradient(180deg,${withAlpha(T.accent, 0.05)},${T.panel} 120px)` : T.panel,
               }}>
                 {/* Card header */}
                 <div

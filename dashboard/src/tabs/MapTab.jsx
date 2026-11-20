@@ -1,4 +1,4 @@
-import { T, withAlpha } from "../lib/theme";
+import { PANEL, T } from "../lib/theme";
 import { NetworkMap } from "../components/charts/NetworkMap";
 
 export function MapTab({ apps, connections, gateway, localIp, lanDevices }) {
@@ -16,7 +16,7 @@ export function MapTab({ apps, connections, gateway, localIp, lanDevices }) {
           </div>
         )}
       </div>
-      <div style={{ borderRadius: 10, border: `1px solid ${withAlpha(T.accent, 0.08)}`, background: T.panel, padding: 16 }}>
+      <div style={{ ...PANEL, padding: 16 }}>
         <NetworkMap gateway={gateway} localIp={localIp} lanDevices={lanDevices} connections={connections} apps={apps} />
       </div>
     </div>

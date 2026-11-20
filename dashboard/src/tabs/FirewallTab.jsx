@@ -1,6 +1,6 @@
 import { ActionBtn } from "../components/ActionBtn";
 import { formatRate } from "../lib/format";
-import { T, withAlpha } from "../lib/theme";
+import { PANEL, T, withAlpha } from "../lib/theme";
 import { Sparkline } from "../components/charts/Sparkline";
 
 export function FirewallTab({ apps, appHistory, blockedApps, blocklist, blockedIps, newBlocklistIp, setNewBlocklistIp, searchFilter, setSearchFilter, askToConnect, setAskToConnect, toggleBlock, triggerAction }) {
@@ -8,7 +8,7 @@ export function FirewallTab({ apps, appHistory, blockedApps, blocklist, blockedI
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, padding: "12px 16px", borderRadius: 10, background: "linear-gradient(135deg,rgba(251,146,60,0.06),transparent)", border: "1px solid rgba(251,146,60,0.1)" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, padding: "12px 16px", ...PANEL, background: `linear-gradient(135deg,${withAlpha(T.orange, 0.07)},${T.panel} 60%)` }}>
         <div>
           <div style={{ fontSize: 12, fontWeight: 600 }}>Ask to Connect Mode</div>
           <div style={{ fontSize: 11, color: T.textSecondary }}>Prompt before new apps access the network</div>
@@ -26,7 +26,7 @@ export function FirewallTab({ apps, appHistory, blockedApps, blocklist, blockedI
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {filteredApps.map((app) => (
-            <div key={app.name} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+            <div key={app.name} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", ...PANEL }}>
               <span style={{ fontSize: 22 }}>{app.icon}</span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 12, fontWeight: 600 }}>{app.name}</div>
@@ -53,7 +53,7 @@ export function FirewallTab({ apps, appHistory, blockedApps, blocklist, blockedI
       )}
 
       {/* ── Blocklist Manager ─────────────────────────────── */}
-      <div style={{ marginTop: 24 }}>
+      <div style={{ marginTop: 24, ...PANEL, padding: 16 }}>
         <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1.5, marginBottom: 12 }}>BLOCKLIST MANAGER</div>
 
         {/* Session netsh blocks */}

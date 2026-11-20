@@ -1,6 +1,6 @@
 import { SectionHeader } from "../components/SectionHeader";
 import { PALETTE } from "../lib/colors";
-import { T, withAlpha } from "../lib/theme";
+import { PANEL, T } from "../lib/theme";
 import { AnalyticsSummary } from "../components/charts/AnalyticsSummary";
 import { ConnectionsTable } from "../components/charts/ConnectionsTable";
 import { DonutChart } from "../components/charts/DonutChart";
@@ -16,7 +16,7 @@ export function AnalyticsTab({ apps, connections }) {
       {/* ── 2. Bandwidth distribution + top hosts ─────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
         {/* Donut chart */}
-        <div style={{ borderRadius: 10, border: `1px solid ${withAlpha(T.accent, 0.08)}`, background: T.panel, padding: "18px 20px" }}>
+        <div style={{ ...PANEL, padding: "18px 20px" }}>
           <SectionHeader
             title="BANDWIDTH DISTRIBUTION"
             desc="Share of total bandwidth consumed by each app (hover slices or legend to highlight)" />
@@ -24,7 +24,7 @@ export function AnalyticsTab({ apps, connections }) {
         </div>
 
         {/* Top destinations compact list */}
-        <div style={{ borderRadius: 10, border: `1px solid ${withAlpha(T.accent, 0.08)}`, background: T.panel, padding: "18px 20px" }}>
+        <div style={{ ...PANEL, padding: "18px 20px" }}>
           <SectionHeader
             title="TOP DESTINATIONS"
             desc="Most-connected remote hosts across all apps right now" />
@@ -65,7 +65,7 @@ export function AnalyticsTab({ apps, connections }) {
         <SectionHeader
           title="TRAFFIC FLOW"
           desc="Sankey diagram showing how bandwidth flows from each app to its network destinations. Link thickness is proportional to bandwidth. Hover links for exact rates." />
-        <div style={{ borderRadius: 10, border: `1px solid ${withAlpha(T.accent, 0.08)}`, background: T.panel, padding: 16, overflow: "visible" }}>
+        <div style={{ ...PANEL, padding: 16, overflow: "visible" }}>
           <SankeyChart apps={apps} connections={connections} />
         </div>
       </div>
@@ -83,7 +83,7 @@ export function AnalyticsTab({ apps, connections }) {
         <SectionHeader
           title="BANDWIDTH TREEMAP"
           desc="Tile area ∝ total bandwidth. Color intensity ∝ traffic level — brighter tiles are using more bandwidth. Hover any tile for detailed stats." />
-        <div style={{ borderRadius: 10, border: `1px solid ${withAlpha(T.accent, 0.08)}`, background: T.panel, padding: 16 }}>
+        <div style={{ ...PANEL, padding: 16 }}>
           <TreemapChart apps={apps} />
         </div>
       </div>

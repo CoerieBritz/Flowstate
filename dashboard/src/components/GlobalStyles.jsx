@@ -11,6 +11,17 @@ export function GlobalStyles() {
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: ${withAlpha(T.accent, 0.2)}; border-radius: 3px; }
+
+        /* Data tables (className="fs-table"): 12px rows, hover highlight, sticky headers.
+           Wrappers use overflow: clip, which rounds corners without trapping sticky. */
+        .fs-table td { font-size: 12px !important; }
+        .fs-table thead th {
+          position: sticky; top: 0; z-index: 2;
+          background: ${T.panel};
+          box-shadow: inset 0 -1px 0 ${T.panelBorder};
+        }
+        .fs-table tbody tr { transition: background 0.12s; }
+        .fs-table tbody tr:hover { background: ${withAlpha(T.accent, 0.07)} !important; }
       `}</style>
   );
 }

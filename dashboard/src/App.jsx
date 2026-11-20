@@ -330,7 +330,7 @@ export default function NetMonitor() {
   };
 
   return (
-    <div style={{ fontFamily: T.fontMono, background: T.bg, color: T.text, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ fontFamily: T.fontMono, background: T.bg, color: T.text, height: "100vh", display: "flex", flexDirection: "column" }}>
 
       {/* ── HEADER ────────────────────────────────────────────────── */}
       <AppHeader totalSent={totalSent} totalRecv={totalRecv} wsStatus={wsStatus} />
@@ -340,7 +340,7 @@ export default function NetMonitor() {
       {/* ── TAB BAR ───────────────────────────────────────────────── */}
       <TabNav tab={tab} onSelectTab={selectTab} onSelectGroup={selectGroup} counts={navCounts} />
 
-      <div style={{ flex: 1, padding: 20, overflow: "auto" }}>
+      <div style={{ flex: 1, minHeight: 0, padding: 20, overflow: "auto" }}>  {/* the only scroller: header/nav stay put, table headers stick */}
 
         {/* ══ TRAFFIC TAB ══════════════════════════════════════════ */}
         {tab === "graph" && (

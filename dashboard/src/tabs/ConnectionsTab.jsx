@@ -2,7 +2,7 @@ import { ActionBtn } from "../components/ActionBtn";
 import { LookupBtn } from "../components/LookupBtn";
 import { ThreatBadge } from "../components/ThreatBadge";
 import { riskColor } from "../lib/colors";
-import { T, withAlpha } from "../lib/theme";
+import { PANEL, T, withAlpha } from "../lib/theme";
 
 export function ConnectionsTab({ connections, threats, threatIntelCache, lookupLoading, tiPanelIp, selectedApp, setSelectedApp, triggerAction, sendLookup, toggleTiPanel, threatCount }) {
   const filteredConns = selectedApp ? connections.filter((c) => c.app === selectedApp) : connections;
@@ -42,8 +42,8 @@ export function ConnectionsTab({ connections, threats, threatIntelCache, lookupL
       {connections.length === 0 ? (
         <div style={{ color: T.textMuted, fontSize: 12, padding: "20px 0" }}>Waiting for connection data…</div>
       ) : (
-        <div style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${withAlpha(T.accent, 0.08)}` }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+        <div style={{ ...PANEL, overflow: "clip" }}>
+          <table className="fs-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ background: withAlpha(T.accent, 0.04) }}>
                 {["App","Remote Host","IP Address","Port","Protocol","Status","Threat","Actions"].map((h) => (
@@ -98,7 +98,7 @@ export function ConnectionsTab({ connections, threats, threatIntelCache, lookupL
                             )}
                           />
                         )}
-                        {c.pid && (
+                        {c.pid > 0 && (
                           <ActionBtn icon="☠️" label="Kill" color={T.orange}
                             title={`Kill process ${c.app} (PID ${c.pid})`}
                             onClick={() => triggerAction(

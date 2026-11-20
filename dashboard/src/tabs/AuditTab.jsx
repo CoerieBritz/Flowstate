@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { T, withAlpha } from "../lib/theme";
+import { PANEL, T, withAlpha } from "../lib/theme";
 
 // ════════════════════════════════════════════════════════════════════
 // AUDIT LOG TAB
@@ -34,7 +34,7 @@ export function AuditLogTab({ auditLog, undoStack, onAction }) {
           { label: "UNDO AVAILABLE", value: undoStack.length, color: T.warning },
         ].map((s) => (
           <div key={s.label} style={{
-            flex: 1, minWidth: 100, padding: "10px 16px", borderRadius: 8,
+            flex: 1, minWidth: 100, padding: "10px 16px", borderRadius: T.radius,
             background: `${s.color}0d`, border: `1px solid ${s.color}22`,
           }}>
             <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textMuted, letterSpacing: 1.5, marginBottom: 4 }}>{s.label}</div>
@@ -61,8 +61,8 @@ export function AuditLogTab({ auditLog, undoStack, onAction }) {
           {auditLog.length === 0 ? "No actions taken yet." : "No actions match the filter."}
         </div>
       ) : (
-        <div style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${withAlpha(T.accent, 0.08)}` }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+        <div style={{ ...PANEL, overflow: "clip" }}>
+          <table className="fs-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ background: withAlpha(T.accent, 0.04) }}>
                 {["Timestamp", "Action", "Target", "Result", "Details", "Undo"].map((h) => (

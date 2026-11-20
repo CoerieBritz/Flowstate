@@ -48,7 +48,7 @@ export function withAlpha(hex, a) {
 }
 
 /** Shared panel surface: background, 1px border, 12px radius. */
-const PANEL = {
+export const PANEL = {
   background: T.panel,
   border: `1px solid ${T.panelBorder}`,
   borderRadius: T.radius,

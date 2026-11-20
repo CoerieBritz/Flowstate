@@ -1,5 +1,5 @@
 import { severityBg, severityColor } from "../lib/colors";
-import { T } from "../lib/theme";
+import { PANEL, T } from "../lib/theme";
 
 export function AlertsTab({ alerts }) {
   return (
@@ -8,7 +8,7 @@ export function AlertsTab({ alerts }) {
         <div style={{ color: T.textMuted, fontSize: 12, padding: "20px 0" }}>No alerts yet.</div>
       ) : (
         [...alerts].reverse().map((a, i) => (
-          <div key={i} style={{ padding: "12px 16px", borderRadius: 10, background: severityBg[a.severity] || severityBg.info, border: `1px solid ${(severityColor[a.severity] || severityColor.info)}22`, display: "flex", alignItems: "center", gap: 12 }}>
+          <div key={i} style={{ padding: "12px 16px", ...PANEL, background: `linear-gradient(90deg,${severityBg[a.severity] || severityBg.info},${T.panel} 45%)`, borderLeft: `3px solid ${severityColor[a.severity] || severityColor.info}`, display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: severityColor[a.severity] || severityColor.info, boxShadow: `0 0 8px ${severityColor[a.severity] || severityColor.info}` }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 12, fontWeight: 500 }}>{a.message}</div>

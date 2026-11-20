@@ -30,9 +30,9 @@ function IncidentCard({ incident, onAcknowledge, onResolve, onAction, apps }) {
 
   return (
     <div style={{
-      borderRadius: 10,
+      borderRadius: T.radius,
       border: `1px solid ${sev.border}`,
-      background: isResolved ? "rgba(255,255,255,0.015)" : sev.bg,
+      background: isResolved ? T.panel : `linear-gradient(90deg,${sev.bg},${T.panel} 55%)`,
       marginBottom: 10,
       overflow: "hidden",
       opacity: isResolved ? 0.6 : 1,
@@ -278,7 +278,7 @@ export function IncidentsTab({ incidents, onAcknowledge, onResolve, onAction, ap
           { label: "RESOLVED",     value: resolved.length, color: T.success },
         ].map((s) => (
           <div key={s.label} style={{
-            padding: "10px 16px", borderRadius: 8, flex: 1, minWidth: 100,
+            padding: "10px 16px", borderRadius: T.radius, flex: 1, minWidth: 100,
             background: `${s.color}0d`, border: `1px solid ${s.color}22`,
           }}>
             <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textMuted, letterSpacing: 1.5, marginBottom: 4 }}>{s.label}</div>
@@ -288,7 +288,7 @@ export function IncidentsTab({ incidents, onAcknowledge, onResolve, onAction, ap
         {Object.entries(sevCounts).filter(([, v]) => v > 0).map(([sev, count]) => {
           const c = INC_SEV[sev];
           return (
-            <div key={sev} style={{ padding: "10px 16px", borderRadius: 8, background: c.bg, border: `1px solid ${c.border}` }}>
+            <div key={sev} style={{ padding: "10px 16px", borderRadius: T.radius, background: c.bg, border: `1px solid ${c.border}` }}>
               <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textMuted, letterSpacing: 1.5, marginBottom: 4 }}>{sev}</div>
               <div style={{ fontSize: 22, fontWeight: 700, color: c.color }}>{count}</div>
             </div>
