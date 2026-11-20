@@ -1,4 +1,4 @@
-<p align="center">
+<img width="1900" height="998" alt="image" src="https://github.com/user-attachments/assets/933003ca-eca1-4872-bc9c-a5c3d63ab4b9" /><p align="center">
   <img src="dashboard/app-icon.png" width="120" alt="FlowState logo">
 </p>
 
@@ -191,5 +191,8 @@ FlowState is **dual-licensed**:
 
 - **Community edition — [AGPL-3.0](LICENSE).** Free to use, modify and share. If you run a modified version as a network service, you must publish your changes under the same licence.
 - **Commercial licence** — for use in closed-source products or without AGPL obligations. Contact **waspcb@gmail.com**.
+<img width="1900" height="998" alt="image" src="https://github.com/user-attachments/assets/6f5945ec-0859-4cbf-bfe3-88a70e28f5f2" />
+<img width="1909" height="1011" alt="image" src="https://github.com/user-attachments/assets/17724888-1345-485c-bb2f-65ad2b74ccc3" />
+<img width="1896" height="1021" alt="image" src="https://github.com/user-attachments/assets/7b6a824a-e413-436f-9399-f922c5da6a10" />
 
 Copyright © 2026 Coerie Britz
