@@ -25,3 +25,7 @@ export const THREAT_COLORS = {
   medium: { bg: "rgba(251,146,60,0.15)",  text: "#fb923c", border: "rgba(251,146,60,0.35)"  },
   low:    { bg: "rgba(251,191,36,0.12)",  text: "#fbbf24", border: "rgba(251,191,36,0.30)"  },
 };
+
+// Alert severity → colour / background (Alerts tab)
+export const severityColor = { info: "#38bdf8", warning: "#fbbf24", danger: "#ef4444" };
+export const severityBg = { info: "rgba(56,189,248,0.1)", warning: "rgba(251,191,36,0.1)", danger: "rgba(239,68,68,0.1)" };
