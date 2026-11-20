@@ -58,9 +58,15 @@ _CRITICAL_PNAMES = frozenset({
 })
 
 # ── FlowState's own app process names ─────────────────────────────────
-# FlowState.exe = installed Tauri app (productName); netwatch.exe = the
-# Cargo binary name used by `tauri dev` / unbundled builds.
-_APP_PNAMES = frozenset({"flowstate.exe", "netwatch.exe"})
+# flowstate.exe = the Tauri app (productName / Cargo binary name);
+# flowstate-backend*.exe = the Python sidecar. The netwatch names are
+# kept for installs and dev builds made before the rename.
+_APP_PNAMES = frozenset({
+    "flowstate.exe", "flowstate-backend.exe",
+    "flowstate-backend-x86_64-pc-windows-msvc.exe",
+    "netwatch.exe", "netwatch-backend.exe",
+    "netwatch-backend-x86_64-pc-windows-msvc.exe",
+})
 
 # ── IP validation helpers ─────────────────────────────────────────────
 

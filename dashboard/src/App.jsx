@@ -1554,7 +1554,7 @@ function NetworkMap({ gateway, localIp, lanDevices, connections, apps }) {
     <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
       {renderNodes.length === 0 ? (
         <div style={{ height: H, display: "flex", alignItems: "center", justifyContent: "center", color: "#475569", fontSize: 12, background: "#080d18", borderRadius: 8 }}>
-          {!gateway ? "Waiting for topology data from backend… (requires netwatch_backend_win.py)" : "Building network map…"}
+          {!gateway ? "Waiting for topology data from backend… (requires flowstate_backend.py)" : "Building network map…"}
         </div>
       ) : (
         <>

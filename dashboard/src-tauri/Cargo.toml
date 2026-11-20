@@ -1,8 +1,8 @@
 [package]
-name = "netwatch"
+name = "flowstate"
 version = "1.0.0"
 edition = "2021"
-description = "Netwatch — Local Network Monitor"
+description = "FlowState — Local Network Monitor"
 authors = ["CoerieBritz"]
 
 [build-dependencies]

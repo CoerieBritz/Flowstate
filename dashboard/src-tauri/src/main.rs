@@ -67,14 +67,14 @@ fn spawn_backend(app: &AppHandle, token: &str) -> Result<CommandChild, Box<dyn s
 
     let data_dir_str = app_data_dir.to_string_lossy().to_string();
 
-    log_to_file(&log_path, &format!("[FlowState] Sidecar binary : netwatch-backend"));
+    log_to_file(&log_path, &format!("[FlowState] Sidecar binary : flowstate-backend"));
     log_to_file(&log_path, &format!("[FlowState] Data directory : {data_dir_str}"));
 
     // Spawn the PyInstaller-compiled backend as a Tauri sidecar.
     // Pass the auth token so the backend can verify WebSocket clients.
     let spawn_result = app
         .shell()
-        .sidecar("netwatch-backend")?
+        .sidecar("flowstate-backend")?
         .args(["--data-dir", &data_dir_str])
         .env("FLOWSTATE_TOKEN", token)
         .spawn();
@@ -82,14 +82,14 @@ fn spawn_backend(app: &AppHandle, token: &str) -> Result<CommandChild, Box<dyn s
     let (mut rx, child) = match spawn_result {
         Ok(v) => v,
         Err(e) => {
-            let msg = format!("[FlowState] ERROR: Failed to spawn netwatch-backend: {e}");
+            let msg = format!("[FlowState] ERROR: Failed to spawn flowstate-backend: {e}");
             log_to_file(&log_path, &msg);
             eprintln!("{msg}");
             return Err(e.into());
         }
     };
 
-    log_to_file(&log_path, "[FlowState] netwatch-backend spawned successfully");
+    log_to_file(&log_path, "[FlowState] flowstate-backend spawned successfully");
 
     // Drain the backend's stdout/stderr in a background task so the pipe
     // buffer never fills up and blocks the backend process.

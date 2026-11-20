@@ -23,17 +23,17 @@ if %errorlevel% neq 0 (
 echo PyInstaller OK.
 
 echo.
-echo [2/3] Compiling netwatch-backend.exe ^(this may take 1-3 minutes^)...
+echo [2/3] Compiling flowstate-backend.exe ^(this may take 1-3 minutes^)...
 echo.
 
 :: Clean previous build artifacts
-if exist "build\netwatch-backend" rmdir /s /q "build\netwatch-backend"
-if exist "dist\netwatch-backend.exe" del /f "dist\netwatch-backend.exe"
-if exist "netwatch-backend.spec" del /f "netwatch-backend.spec"
+if exist "build\flowstate-backend" rmdir /s /q "build\flowstate-backend"
+if exist "dist\flowstate-backend.exe" del /f "dist\flowstate-backend.exe"
+if exist "flowstate-backend.spec" del /f "flowstate-backend.spec"
 
 py -m PyInstaller ^
     --onefile ^
-    --name netwatch-backend ^
+    --name flowstate-backend ^
     --add-data "soar;soar" ^
     --add-data "playbooks;playbooks" ^
     --hidden-import=websockets ^
@@ -46,7 +46,7 @@ py -m PyInstaller ^
     --hidden-import=sqlite3 ^
     --collect-all websockets ^
     --noconfirm ^
-    netwatch_backend_win.py
+    flowstate_backend.py
 
 if %errorlevel% neq 0 (
     echo.
@@ -61,7 +61,7 @@ echo [3/3] Copying to Tauri sidecar directory...
 set "SIDECAR_DIR=dashboard\src-tauri\binaries"
 if not exist "%SIDECAR_DIR%" mkdir "%SIDECAR_DIR%"
 
-copy /y "dist\netwatch-backend.exe" "%SIDECAR_DIR%\netwatch-backend-x86_64-pc-windows-msvc.exe"
+copy /y "dist\flowstate-backend.exe" "%SIDECAR_DIR%\flowstate-backend-x86_64-pc-windows-msvc.exe"
 if %errorlevel% neq 0 (
     echo ERROR: Failed to copy to sidecar directory.
     pause
@@ -71,6 +71,6 @@ if %errorlevel% neq 0 (
 echo.
 echo ============================================================
 echo  Backend build complete!
-echo  Output: %SIDECAR_DIR%\netwatch-backend-x86_64-pc-windows-msvc.exe
+echo  Output: %SIDECAR_DIR%\flowstate-backend-x86_64-pc-windows-msvc.exe
 echo ============================================================
 echo.

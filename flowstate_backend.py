@@ -7,7 +7,7 @@ FLOWSTATE - Local Network Monitor Backend (Windows)
 ===================================================
 Windows-native version. Run from PowerShell as Administrator:
 
-    python netwatch_backend_win.py
+    python flowstate_backend.py
 
 Requirements:
     pip install psutil websockets
@@ -71,7 +71,7 @@ _arg_parser.add_argument(
     help=(
         "Directory for runtime data (history.db, settings.json, snapshots/). "
         "Defaults to ./data/ next to the script/executable when omitted. "
-        "Set automatically by the Tauri wrapper to %%APPDATA%%\\com.coerie.netwatch."
+        "Set automatically by the Tauri wrapper to %%APPDATA%%\\com.coerie.flowstate."
     ),
 )
 _cli_args, _unknown_args = _arg_parser.parse_known_args()
@@ -150,7 +150,7 @@ ALERT_BANDWIDTH_THRESHOLD = 100 * 1024 * 1024   # 100 MB/hour per app
 MAX_HISTORY_DAYS = 30
 
 # === PATHS ===================================================================
-# _DATA_DIR is set from --data-dir if supplied (Tauri sets %APPDATA%\com.coerie.netwatch),
+# _DATA_DIR is set from --data-dir if supplied (Tauri sets %APPDATA%\com.coerie.flowstate),
 # otherwise falls back to ./data/ next to the running executable/script.
 
 def _resolve_data_dir() -> Path:

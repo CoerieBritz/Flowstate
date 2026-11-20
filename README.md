@@ -83,7 +83,7 @@ FlowState gives you real-time visibility into every connection leaving your mach
 │                                                               │
 │  ┌─────────────────────────┐      ┌────────────────────────┐ │
 │  │   Python Backend         │      │   React Dashboard       │ │
-│  │  flowstate_backend_win.py │      │   dashboard/ (Vite)    │ │
+│  │  flowstate_backend.py    │      │   dashboard/ (Vite)     │ │
 │  │                          │      │                         │ │
 │  │  psutil — connection &   │      │  📈 Traffic graph       │ │
 │  │  process polling         │◄────►│  📊 Analytics / Sankey  │ │
@@ -147,7 +147,7 @@ This script self-elevates to Administrator, installs any missing dependencies, a
 
 ```bash
 # Terminal 1 — backend (run as Administrator on Windows)
-python flowstate_backend_win.py
+python flowstate_backend.py
 
 # Terminal 2 — dashboard
 cd dashboard
