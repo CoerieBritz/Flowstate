@@ -1,7 +1,48 @@
 import { useState, useMemo } from "react";
 import { PALETTE } from "../../lib/colors";
 import { formatRate } from "../../lib/format";
-import { T } from "../../lib/theme";
+import { T, withAlpha } from "../../lib/theme";
+
+const SEGMENTS = 48;          // segments per bar
+const GENERIC_ICON = "💻";    // getAppIcon() fallback → show an initial instead
+
+/** Thin bar of small rounded segments with 3px gaps; fills `frac` (0..1). */
+function SegmentedBar({ frac, color }) {
+  const exact = Math.max(0, Math.min(1, frac)) * SEGMENTS;
+  const full = Math.floor(exact);
+  const partial = exact - full;
+  const lit = frac > 0 && exact < 1 ? 1 : full;   // any traffic shows ≥1 segment
+  return (
+    <div style={{ display: "flex", gap: 3, height: 6 }}>
+      {Array.from({ length: SEGMENTS }, (_, i) => {
+        const on = i < lit;
+        const part = !on && i === full && partial > 0.15;
+        return (
+          <div key={i} style={{
+            flex: 1, borderRadius: 2,
+            background: on ? color : part ? withAlpha(color, 0.25 + partial * 0.6) : withAlpha(T.textSecondary, 0.08),
+            boxShadow: on ? `0 0 6px ${withAlpha(color, 0.45)}` : "none",
+            transition: "background 0.3s",
+          }} />
+        );
+      })}
+    </div>
+  );
+}
+
+function AppAvatar({ app, color }) {
+  const showIcon = app.icon && app.icon !== GENERIC_ICON;
+  return (
+    <div style={{
+      width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: withAlpha(color, 0.14), border: `1px solid ${withAlpha(color, 0.35)}`,
+      fontFamily: T.fontLabel, fontWeight: 700, fontSize: showIcon ? 16 : 15, color,
+    }}>
+      {showIcon ? app.icon : (app.name || "?").replace(/^[^a-z0-9]+/i, "").charAt(0).toUpperCase() || "?"}
+    </div>
+  );
+}
 
 // ════════════════════════════════════════════════════════════════════
 // APP BANDWIDTH BARS — horizontal stacked bars with click-to-drill-in
@@ -42,26 +83,29 @@ export function AppBandwidthBarsWithDrillIn({ apps, connections, blockedApps, tr
 
         return (
           <div key={app.name}>
-            {/* Bar row — clickable */}
+            {/* Bar row — clickable: avatar · name · segmented bars · values */}
             <div
               onClick={() => setExpandedApp(isExpanded ? null : app.name)}
-              style={{ cursor: "pointer", padding: "6px 0", borderRadius: isExpanded ? "6px 6px 0 0" : 6, transition: "background 0.15s",
-                background: isExpanded ? "rgba(255,255,255,0.03)" : "transparent" }}
+              onMouseEnter={(e) => { if (!isExpanded) e.currentTarget.style.background = withAlpha(T.textSecondary, 0.05); }}
+              onMouseLeave={(e) => { if (!isExpanded) e.currentTarget.style.background = "transparent"; }}
+              style={{ cursor: "pointer", padding: "8px 10px", borderRadius: isExpanded ? "8px 8px 0 0" : 8, transition: "background 0.15s",
+                display: "grid", gridTemplateColumns: "14px 30px minmax(120px, 200px) 1fr auto", alignItems: "center", columnGap: 12,
+                background: isExpanded ? withAlpha(T.textSecondary, 0.06) : "transparent" }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, marginBottom: 4 }}>
-                <span style={{ color, fontWeight: 600 }}>
-                  {isExpanded ? "▼ " : "▶ "}{app.icon} {app.name}
-                </span>
-                <span style={{ color: T.textSecondary }}>
-                  <span style={{ color: T.download }}>↓{formatRate(app.recv)}</span>
-                  {" "}
-                  <span style={{ color: T.upload }}>↑{formatRate(app.sent)}</span>
-                  <span style={{ marginLeft: 8, color: T.textMuted }}>{appConns.length} conn{appConns.length !== 1 ? "s" : ""}</span>
-                </span>
+              <span style={{ color: T.textSecondary, fontSize: 11 }}>{isExpanded ? "▼" : "▶"}</span>
+              <AppAvatar app={app} color={color} />
+              <span style={{ color: T.text, fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={app.name}>
+                {app.name}
+              </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }} title={`↓ ${formatRate(app.recv)}  ↑ ${formatRate(app.sent)}`}>
+                <SegmentedBar frac={recvPct / 100} color={T.download} />
+                <SegmentedBar frac={sentPct / 100} color={T.upload} />
               </div>
-              <div style={{ height: 12, background: T.inset, borderRadius: 6, overflow: "hidden", display: "flex" }}>
-                <div style={{ width: `${recvPct}%`, background: `${color}cc`, transition: "width 0.4s", borderRadius: "6px 0 0 6px" }} />
-                <div style={{ width: `${sentPct}%`, background: `${color}55`, transition: "width 0.4s" }} />
+              <div style={{ fontFamily: T.fontMono, fontSize: 12, textAlign: "right", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums", minWidth: 250 }}>
+                <span style={{ color: T.download }}>↓ {formatRate(app.recv)}</span>
+                <span style={{ color: T.textMuted }}> / </span>
+                <span style={{ color: T.upload }}>↑ {formatRate(app.sent)}</span>
+                <span style={{ color: T.textSecondary }}> · {appConns.length} connection{appConns.length !== 1 ? "s" : ""}</span>
               </div>
             </div>
 
@@ -122,9 +166,9 @@ export function AppBandwidthBarsWithDrillIn({ apps, connections, blockedApps, tr
           </div>
         );
       })}
-      <div style={{ display: "flex", gap: 16, marginTop: 4, fontSize: 11, color: T.textMuted }}>
-        <span><span style={{ display: "inline-block", width: 10, height: 6, background: `${T.download}cc`, borderRadius: 2, marginRight: 4 }} />Download (solid)</span>
-        <span><span style={{ display: "inline-block", width: 10, height: 6, background: `${T.upload}55`, borderRadius: 2, marginRight: 4 }} />Upload (faded)</span>
+      <div style={{ display: "flex", gap: 16, marginTop: 6, fontSize: 11, color: T.textSecondary }}>
+        <span><span style={{ display: "inline-block", width: 10, height: 6, background: T.download, borderRadius: 2, marginRight: 5 }} />Download (top)</span>
+        <span><span style={{ display: "inline-block", width: 10, height: 6, background: T.upload, borderRadius: 2, marginRight: 5 }} />Upload (bottom)</span>
         <span style={{ marginLeft: "auto" }}>Click any row to expand</span>
       </div>
     </div>

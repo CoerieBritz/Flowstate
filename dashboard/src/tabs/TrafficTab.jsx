@@ -79,7 +79,7 @@ export function TrafficTab({ history, apps, blockedApps, connections, soarStats,
       {/* Per-app bandwidth bars with drill-in */}
       <div style={{ borderRadius: 10, border: `1px solid ${withAlpha(T.accent, 0.08)}`, background: T.panel, padding: 16, marginBottom: 16 }}>
         <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1, marginBottom: 12 }}>
-          TOP APPS BY BANDWIDTH <span style={{ color: T.textMuted, fontWeight: 400 }}>(solid = download, faded = upload)</span>
+          TOP APPS BY BANDWIDTH <span style={{ color: T.textMuted, fontWeight: 400 }}>(per app · cyan = download, violet = upload)</span>
         </div>
         <AppBandwidthBarsWithDrillIn
           apps={apps}
