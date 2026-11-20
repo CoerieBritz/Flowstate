@@ -18,7 +18,7 @@
 
 ## Download & Install
 
-1. Go to the [latest release](https://github.com/CoerieBritz/flowstate/releases/latest) and download `FlowState_x.x.x_x64-setup.exe`.
+1. Go to the [latest release](https://github.com/CoerieBritz/flowstate/releases/latest) and download `FlowState_1.3.0_x64-setup`.
 2. Run the installer. Windows SmartScreen may warn because the installer isn't code-signed yet — click **More info → Run anyway**.
 3. Launch **FlowState** from the Start menu. It asks for Administrator rights, which it needs to see which process owns each connection.
 
