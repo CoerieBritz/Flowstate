@@ -1,193 +1,115 @@
-# ⚡ FlowState
+<p align="center">
+  <img src="dashboard/app-icon.png" width="120" alt="FlowState logo">
+</p>
 
-**Open-source local network monitor with SOAR capabilities —**
+<h1 align="center">FlowState</h1>
 
-FlowState gives you real-time visibility into every connection leaving your machine. It correlates alerts into incidents, enriches threat indicators with VirusTotal and AbuseIPDB, and lets you automate detection logic with YAML playbooks — all running entirely on your own hardware. No cloud, no subscriptions, no telemetry.
+<p align="center">
+  <b>Open-source, self-hosted network monitor for Windows with built-in SOAR.</b><br>
+  See every connection leaving your machine, match it against threat intel, and respond — all locally.<br>
+  No cloud. No subscriptions. No telemetry.
+</p>
+
+<p align="center">
+  <a href="https://github.com/CoerieBritz/flowstate/releases/latest"><b>⬇ Download the latest release</b></a>
+</p>
 
 ---
 
-## Screenshots
+## Download & Install
 
-> _[Traffic overview — real-time bandwidth graph and per-app breakdown]_
+1. Go to the [latest release](https://github.com/CoerieBritz/flowstate/releases/latest) and download `FlowState_x.x.x_x64-setup.exe`.
+2. Run the installer. Windows SmartScreen may warn because the installer isn't code-signed yet — click **More info → Run anyway**.
+3. Launch **FlowState** from the Start menu. It asks for Administrator rights, which it needs to see which process owns each connection.
 
-> _[Connections tab — threat badges, one-click block/kill/snapshot actions]_
-
-> _[Playbooks tab — library, detail view with execution pipeline, activity feed]_
-
-> _[Incidents tab — correlated alerts with severity, status, and recommended actions]_
+**Requirements:** Windows 10 or 11 (64-bit). Nothing else — the backend is bundled.
 
 ---
 
 ## Features
 
-### Dashboard Tabs
+The dashboard is grouped into three sections:
 
-| Tab | Description |
-|-----|-------------|
-| **📈 Traffic** | Live upload/download area chart (2-minute rolling window), per-app bandwidth breakdown with sparklines, session totals, trend badges. Includes a global connection map with animated arcs showing destination countries. |
-| **📊 Analytics** | D3 Sankey flow diagram mapping processes → remote hosts → ports. Treemap view for bandwidth distribution. Top talkers ranked by session volume. |
-| **🗺️ Network Map** | Force-directed topology graph (D3) showing your machine, gateway, LAN devices, and all active remote connections. Node size scales with traffic volume. |
-| **🛡️ Firewall** | Persistent IP blocklist manager. Add/remove CIDRs or individual IPs. Block/unblock app-level firewall rules. Undo stack for recent actions. |
-| **🔗 Connections** | Full active connection table — remote host, IP, port, protocol, status, process, and live bandwidth. Rows color-coded by threat risk score. Threat badge with feed source. One-click **Block IP**, **Kill Process**, and **Capture Snapshot** actions with confirmation. Manual 🔍 threat intel lookup per IP. |
-| **🔔 Alerts** | Live alert feed with severity filtering. Covers new processes, bandwidth spikes, blocked app attempts, and threat feed matches. |
-| **🚨 Incidents** | SOAR correlation engine — 5 built-in rules group related alerts into incidents with severity, status (Open/Acknowledged/Resolved), and recommended actions. Playbook-generated incidents carry a 📋 PLAYBOOK badge. |
-| **📋 Playbooks** | YAML automation library — card view with trigger stats and enable/disable toggle, expandable detail view with execution pipeline, inline editor to create or modify playbooks, dry-run tester, real-time activity feed. |
-| **🗒️ Audit Log** | Immutable record of every response action taken (block, kill, snapshot, blocklist change) with timestamps, targets, and results. Filterable and undoable. |
-| **⚙️ Settings** | VirusTotal and AbuseIPDB API key management (masked in transit, stored locally). Alert thresholds, poll interval, display limits, threat feed management with one-click refresh. |
+### Monitor
+| Tab | What it does |
+|-----|--------------|
+| **Traffic** | Live download/upload chart, top apps by bandwidth, session totals, global connection map |
+| **Analytics** | Sankey flow (process → host → port), bandwidth treemap, top talkers |
+| **Firewall** | Persistent IP/CIDR blocklist, app-level block rules, undo |
 
-### SOAR Capabilities
+### Network
+| Tab | What it does |
+|-----|--------------|
+| **Map** | Force-directed topology of your machine, gateway, LAN devices and remote hosts |
+| **Connections** | Every active connection with process, host, port, status, threat score, and one-click Block IP / Kill Process / Snapshot |
 
-**Threat Intelligence**
-- Local blocklist feeds loaded at startup: [Feodo Tracker C2](https://feodotracker.abuse.ch/) (abuse.ch), [URLhaus](https://urlhaus.abuse.ch/), [Spamhaus DROP/EDROP](https://www.spamhaus.org/drop/), [Emerging Threats Compromised IPs](https://rules.emergingthreats.net/)
-- All active connection IPs checked against loaded indicators on every poll
-- SQLite cache for API lookups (`threat_cache` table) with configurable TTL
+### SOAR
+| Tab | What it does |
+|-----|--------------|
+| **Alerts** | Live alert feed — new processes, bandwidth spikes, threat feed matches |
+| **Incidents** | Alerts correlated into incidents with severity, status and recommended actions |
+| **Playbooks** | YAML automation — create, edit, enable/disable and dry-run playbooks in the app |
+| **Audit** | Record of every response action taken, with timestamps and results |
 
-**Live Threat Enrichment**
-- VirusTotal: detection ratio, malicious/suspicious engine count, last analysis date (free tier: 4 req/min)
-- AbuseIPDB: confidence score, abuse category, ISP, country (free tier: 1,000 checks/day)
-- Auto-lookup triggers for any threat-flagged IP
-- Results surface inline on connection rows and in a dedicated ThreatIntelPanel modal
+**Settings** (gear icon): API keys, alert thresholds, poll interval, threat feed refresh.
 
-**Alert Correlation — 5 Built-in Rules**
+### Threat intelligence
+- Local blocklist feeds: [Feodo Tracker](https://feodotracker.abuse.ch/), [URLhaus](https://urlhaus.abuse.ch/), [Spamhaus DROP/EDROP](https://www.spamhaus.org/drop/), [Emerging Threats](https://rules.emergingthreats.net/) — downloaded automatically on first run
+- Optional live enrichment with **VirusTotal** and **AbuseIPDB** (bring your own free API keys)
+- Lookups cached locally in SQLite
 
-| Rule | Description |
-|------|-------------|
+### Correlation rules
+| Rule | Detects |
+|------|---------|
 | R1 | Multiple threat-feed hits from the same remote IP |
-| R2 | Same process connecting to multiple threat-flagged destinations |
-| R3 | New process making outbound connections to known C2 infrastructure |
-| R4 | Process exceeds 2× its rolling 1-hour bandwidth average |
-| R5 | First observed outbound connection from a process |
+| R2 | One process connecting to several flagged destinations |
+| R3 | New process connecting to known C2 infrastructure |
+| R4 | Process exceeding 2× its 1-hour bandwidth average |
+| R5 | First outbound connection from a process |
 
-**Response Actions** (alert-only — all require explicit confirmation)
-- Block IP (Windows firewall rule via `netsh`)
-- Kill Process (`taskkill /PID`)
-- Capture Snapshot (full connection state to JSON)
-- Add to Blocklist (persistent)
-- Undo last action
+### Response actions
+All actions are **alert-only by default** and need your confirmation:
+- Block IP (Windows Firewall rule) — refuses private, loopback and gateway addresses
+- Kill process — refuses critical Windows processes and FlowState itself
+- Capture connection snapshot to JSON
+- Add to persistent blocklist, with undo
 
-**YAML Playbooks**
-- Four starter playbooks included: Suspicious Outbound Traffic, Bandwidth Anomaly, Inbound Port Scan, New Process First Outbound
-- Trigger types: `threat_flagged`, `bandwidth_spike`, `new_process`, `port_scan`
-- Per-playbook enrichment toggles (VirusTotal, AbuseIPDB)
-- Deduplication: same trigger won't refire until the previous incident is resolved
-- Create, edit, and delete playbooks directly in the dashboard — changes write to `playbooks/*.yml` instantly
-- Dry-run mode: test any playbook against current live connections without creating incidents
+### Security
+- The dashboard ↔ backend WebSocket is bound to `localhost`, requires a per-launch token, and rejects unknown origins
+- API keys are stored locally and never sent back to the UI in plain text
 
 ---
 
-## Architecture
+## Known limitations
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                    Windows Host (Admin)                       │
-│                                                               │
-│  ┌─────────────────────────┐      ┌────────────────────────┐ │
-│  │   Python Backend         │      │   React Dashboard       │ │
-│  │  flowstate_backend.py    │      │   dashboard/ (Vite)     │ │
-│  │                          │      │                         │ │
-│  │  psutil — connection &   │      │  📈 Traffic graph       │ │
-│  │  process polling         │◄────►│  📊 Analytics / Sankey  │ │
-│  │                          │  WS  │  🗺️  Network map (D3)   │ │
-│  │  soar/                   │:8765 │  🔗 Connections table   │ │
-│  │  ├── threat_intel.py     │      │  🚨 Incidents           │ │
-│  │  ├── correlator.py       │      │  📋 Playbooks           │ │
-│  │  ├── responder.py        │      │  ⚙️  Settings           │ │
-│  │  ├── threat_intel_api.py │      └────────────────────────┘ │
-│  │  └── playbooks.py        │      http://localhost:5173       │
-│  │                          │                                   │
-│  │  data/                   │                                   │
-│  │  ├── history.db (SQLite) │                                   │
-│  │  └── settings.json       │                                   │
-│  │                          │                                   │
-│  │  playbooks/*.yml         │                                   │
-│  └─────────────────────────┘                                   │
-│  ws://localhost:8765                                           │
-└──────────────────────────────────────────────────────────────┘
-```
-
-The backend polls every second (configurable), evaluates all SOAR modules in sequence, and broadcasts a JSON snapshot to all connected WebSocket clients. The dashboard maintains rolling state and renders everything client-side — no server-side rendering, no database queries from the frontend.
-
----
-
-## Quick Start
-
-### Prerequisites
-
-- **Python 3.12+** — [python.org](https://www.python.org/downloads/)
-- **Node.js 18+** — [nodejs.org](https://nodejs.org/)
-- **Windows** — the backend uses `psutil` and `netsh` for Windows firewall integration. Linux/macOS are not currently supported.
-
-### Install
-
-```bash
-# Clone the repo
-git clone https://github.com/your-username/flowstate.git
-cd flowstate
-
-# Install Python dependencies
-pip install psutil websockets
-
-# Install dashboard dependencies
-cd dashboard
-npm install
-cd ..
-```
-
-### Run
-
-**Desktop app (Tauri dev mode):** run `build_backend.bat` once, then `build_dev.bat`. The app starts the backend itself.
-
-**Manual start — two terminals:**
-
-```bash
-# Terminal 1 — backend (run as Administrator on Windows)
-python flowstate_backend.py
-
-# Terminal 2 — dashboard
-cd dashboard
-npm run dev
-```
-
-Then open **http://localhost:5173** in your browser.
-
-> **Why Administrator?** `psutil` needs elevated privileges to read connection ownership (which process owns which socket) on Windows. Without it, many connections will show as "Unknown" process.
+- **Per-app bandwidth is estimated.** Total system traffic is split across apps by their share of connections. Real per-process byte counting (via Windows ETW) is planned.
+- **Windows only.** Linux/macOS are not supported yet.
+- **Alerts can be noisy** on a busy machine — tune thresholds in Settings.
 
 ---
 
 ## Configuration
 
-### API Keys
+### API keys (optional)
+Add them in **Settings**. Without them, local threat feed matching still works.
 
-Add your free API keys in the **Settings** tab. Keys are stored in `data/settings.json` on your machine and never leave it.
-
-| Service | Free Tier | Sign Up |
+| Service | Free tier | Sign up |
 |---------|-----------|---------|
-| VirusTotal | 4 req/min, 500 req/day | [virustotal.com/gui/join-us](https://www.virustotal.com/gui/join-us) |
-| AbuseIPDB | 1,000 checks/day | [abuseipdb.com/register](https://www.abuseipdb.com/register) |
-
-Without API keys, local threat feed matching still works — you just won't get live enrichment.
-
-### Threat Feeds
-
-Feeds are loaded from `soar/feeds/` at startup. The backend downloads them automatically on first run and exposes a **🔄 Update Feeds Now** button in Settings.
-
-To add a custom feed, drop a `.txt` or `.csv` file of IPs/CIDRs into `soar/feeds/` and restart the backend.
+| VirusTotal | 4 req/min, 500/day | [virustotal.com](https://www.virustotal.com/gui/join-us) |
+| AbuseIPDB | 1,000 checks/day | [abuseipdb.com](https://www.abuseipdb.com/register) |
 
 ### Playbooks
-
-Playbooks are YAML files in the `playbooks/` directory. Edit them directly or use the **📋 Playbooks** tab in the dashboard.
+Edit in the **Playbooks** tab, or as YAML files in the `playbooks` folder of the data directory:
 
 ```yaml
 name: my_custom_playbook
 display_name: My Custom Playbook
-description: >
-  Triggers when a process connects to a flagged destination
-  with at least medium severity.
+description: Triggers when a process connects to a flagged destination.
 enabled: true
 
 trigger:
   type: threat_flagged   # threat_flagged | bandwidth_spike | new_process | port_scan
-  min_severity: medium   # low | medium | high (threat_flagged only)
+  min_severity: medium   # low | medium | high
 
 enrichment:
   virustotal: true
@@ -198,61 +120,76 @@ incident:
   recommended_actions:
     - Review VirusTotal results for the destination IP
     - Kill the process if it cannot be explained
-    - Add the IP to the persistent blocklist
 ```
 
-Changes take effect after clicking **🔄 Reload** in the Playbooks tab or restarting the backend.
+### Where your data lives
+Installed app: `%APPDATA%\com.coerie.flowstate\`
 
----
-
-## Data Storage
-
-All data is stored locally in the `data/` directory:
-
-| File | Contents |
+| Path | Contents |
 |------|----------|
-| `data/history.db` | SQLite — traffic logs, connection snapshots, threat cache |
-| `data/settings.json` | API keys (write only — never read back to the frontend in plaintext), alert thresholds, display preferences |
-| `data/snapshots/` | JSON connection snapshots captured via the Snapshot action |
-| `data/audit.log` | Append-only log of all response actions |
+| `history.db` | Traffic history, connection snapshots, threat cache |
+| `settings.json` | Settings and API keys |
+| `feeds\` | Downloaded threat feeds (drop your own `.txt`/`.csv` of IPs here) |
+| `playbooks\` | Your playbooks |
+| `snapshots\` | Captured connection snapshots |
+| `audit.log` | Response action log |
+| `flowstate.log` | App and backend log — check this first if something breaks |
+
+Nothing leaves your machine except threat feed downloads and the optional VirusTotal/AbuseIPDB lookups.
 
 ---
 
-## Tech Stack
+## Build from source
+
+**Prerequisites:** Python 3.12+, Node.js 18+, Rust ([rustup.rs](https://rustup.rs/)), Windows.
+
+```bash
+git clone https://github.com/CoerieBritz/flowstate.git
+cd flowstate
+py -m pip install psutil websockets pyyaml pyinstaller
+cd dashboard && npm install && cd ..
+```
+
+| Script | Does |
+|--------|------|
+| `build_backend.bat` | Compiles the Python backend into the Tauri sidecar |
+| `build_dev.bat` | Runs the desktop app in dev mode (run `build_backend.bat` first) |
+| `build_release.bat` | Builds the installer into `dashboard\src-tauri\target\release\bundle\nsis\` |
+
+**Browser-only dev mode (no Tauri):**
+1. As Administrator: `py flowstate_backend.py` — it prints a line `VITE_WS_TOKEN=...`
+2. Put that line in `dashboard/.env.local`
+3. `cd dashboard && npm run dev`, then open http://localhost:5173
+
+---
+
+## Tech stack
 
 | Layer | Technology |
 |-------|------------|
-| Backend | Python 3.12, [psutil](https://psutil.readthedocs.io/), [websockets](https://websockets.readthedocs.io/) |
-| Frontend | [React 18](https://react.dev/), [Vite](https://vitejs.dev/) |
-| Visualizations | [D3](https://d3js.org/) (force graph, Sankey, treemap, geo map), [Recharts](https://recharts.org/) |
-| Data | SQLite (via Python stdlib `sqlite3`) |
-| Threat Intel | [Feodo Tracker](https://feodotracker.abuse.ch/), [URLhaus](https://urlhaus.abuse.ch/), [Spamhaus](https://www.spamhaus.org/drop/), [Emerging Threats](https://rules.emergingthreats.net/), VirusTotal API, AbuseIPDB API |
+| Backend | Python 3.12, psutil, websockets, SQLite |
+| Frontend | React, Vite, D3, Recharts |
+| Desktop | Tauri v2 (NSIS installer), PyInstaller sidecar |
 
+---
 
 ## Contributing
 
-Contributions are welcome. Some areas that would benefit from help:
+Contributions welcome — especially:
+- Real per-process bandwidth via ETW
+- New threat feeds (`soar/threat_intel.py`) and correlation rules (`soar/correlator.py`)
+- New playbook triggers (`soar/playbooks.py`)
+- Tests for the SOAR modules
 
-- **Linux / macOS response actions** — `iptables` / `pf` integration in `soar/responder.py`
-- **Additional threat feeds** — new feed parsers in `soar/threat_intel.py`
-- **Correlation rules** — add rules R6+ in `soar/correlator.py`
-- **Playbook trigger types** — extend `soar/playbooks.py` with new trigger evaluators
-- **Tests** — unit tests for the SOAR modules
-
-To contribute:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Commit your changes: `git commit -m "Add my feature"`
-4. Push to the branch: `git push origin feature/my-feature`
-5. Open a pull request
-
-Please keep PRs focused — one feature or fix per PR.
+Fork, create a branch, keep each PR to one feature or fix, and open a pull request.
 
 ---
 
 ## License
 
-AGPL-3.0 — see [LICENSE](LICENSE) for details.
+FlowState is **dual-licensed**:
 
-Copyright (c) 2026 Coerie
+- **Community edition — [AGPL-3.0](LICENSE).** Free to use, modify and share. If you run a modified version as a network service, you must publish your changes under the same licence.
+- **Commercial licence** — for use in closed-source products or without AGPL obligations. Contact **waspcb@gmail.com**.
+
+Copyright © 2026 Coerie Britz
