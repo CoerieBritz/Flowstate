@@ -16,27 +16,25 @@ export function TrafficTab({ history, apps, blockedApps, connections, soarStats,
   const _dlRate = formatRateDetailed(smoothRate("recv"));
   const _ulRate = formatRateDetailed(smoothRate("sent"));
   const statCards = [
-    { label: "DOWNLOAD RATE", value: _dlRate.main, rateSub: _dlRate.sub, color: T.download, bg: withAlpha(T.download, 0.08), border: withAlpha(T.download, 0.12), trend: <TrendBadge history={history} field="recv" /> },
-    { label: "UPLOAD RATE", value: _ulRate.main, rateSub: _ulRate.sub, color: T.upload, bg: withAlpha(T.upload, 0.08), border: withAlpha(T.upload, 0.12), trend: <TrendBadge history={history} field="sent" /> },
-    { label: "ACTIVE APPS", value: apps.filter((a) => !blockedApps.has(a.name)).length, color: "#a78bfa", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.12)", trend: null },
-    { label: "CONNECTIONS", value: connections.length, color: T.success, bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.12)", trend: null },
+    { label: "DOWNLOAD RATE", value: _dlRate.main, rateSub: _dlRate.sub, accent: T.download, trend: <TrendBadge history={history} field="recv" /> },
+    { label: "UPLOAD RATE", value: _ulRate.main, rateSub: _ulRate.sub, accent: T.upload, trend: <TrendBadge history={history} field="sent" /> },
+    { label: "ACTIVE APPS", value: apps.filter((a) => !blockedApps.has(a.name)).length, accent: T.apps, trend: null },
+    { label: "CONNECTIONS", value: connections.length, accent: T.connections, trend: null },
     {
       label: "THREATS",
       value: threatCount,
-      color: threatCount > 0 ? T.danger : "#334155",
-      bg: threatCount > 0 ? "rgba(239,68,68,0.10)" : "rgba(51,65,85,0.06)",
-      border: threatCount > 0 ? "rgba(239,68,68,0.25)" : "rgba(51,65,85,0.12)",
+      // grey when quiet; red while any connection matches a threat feed
+      accent: threatCount > 0 ? T.danger : T.threats,
       trend: soarStats
-        ? <div style={{ fontSize: 11, color: T.textMuted, marginTop: 4 }}>{(soarStats.total_indicators || 0).toLocaleString()} indicators loaded</div>
-        : <div style={{ fontSize: 11, color: "#334155", marginTop: 4 }}>no feeds loaded</div>,
+        ? <div style={{ fontSize: 11, color: T.textSecondary, marginTop: 6 }}>{(soarStats.total_indicators || 0).toLocaleString()} indicators loaded</div>
+        : <div style={{ fontSize: 11, color: T.textMuted, marginTop: 6 }}>no feeds loaded</div>,
     },
     {
       label: "INCIDENTS",
       value: openIncidentCount,
-      color: criticalIncidentCount > 0 ? T.danger : openIncidentCount > 0 ? T.warning : "#334155",
-      bg:    criticalIncidentCount > 0 ? "rgba(239,68,68,0.10)" : openIncidentCount > 0 ? "rgba(251,191,36,0.08)" : "rgba(51,65,85,0.06)",
-      border: criticalIncidentCount > 0 ? "rgba(239,68,68,0.25)" : openIncidentCount > 0 ? "rgba(251,191,36,0.2)" : "rgba(51,65,85,0.12)",
-      trend: <div style={{ fontSize: 11, color: T.textMuted, marginTop: 4 }}>
+      accent: T.incidents,
+      critical: criticalIncidentCount > 0,   // glows red
+      trend: <div style={{ fontSize: 11, color: criticalIncidentCount > 0 ? T.incidents : T.textSecondary, marginTop: 6, fontWeight: criticalIncidentCount > 0 ? 700 : 400 }}>
         {criticalIncidentCount > 0 ? `${criticalIncidentCount} CRITICAL` : openIncidentCount > 0 ? "open incidents" : "all clear"}
       </div>,
     },
@@ -46,14 +44,24 @@ export function TrafficTab({ history, apps, blockedApps, connections, soarStats,
     <div>
       {/* Stat cards */}
       <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
-        {statCards.map((card) => (
-          <div key={card.label} style={{ flex: 1, padding: "14px 18px", borderRadius: 10, background: `linear-gradient(135deg,${card.bg},${card.bg.replace("0.08","0.02")})`, border: `1px solid ${card.border}` }}>
-            <div style={{ fontFamily: T.fontLabel, fontSize: 11, color: T.textSecondary, letterSpacing: 1.5, marginBottom: 4 }}>{card.label}</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: card.color }}>{card.value}</div>
-            {card.rateSub && <div style={{ fontSize: 11, color: `${card.color}88`, marginTop: 1, fontVariantNumeric: "tabular-nums" }}>{card.rateSub}</div>}
-            {card.trend}
-          </div>
-        ))}
+        {statCards.map((card) => {
+          const glow = card.critical
+            ? `0 0 26px ${withAlpha(T.danger, 0.55)}, inset 0 0 22px ${withAlpha(T.danger, 0.18)}`
+            : `0 0 18px ${card.accent}40`;
+          return (
+            <div key={card.label} style={{
+              flex: 1, minWidth: 0, padding: "14px 18px", borderRadius: T.radius,
+              border: `1.5px solid ${card.critical ? T.danger : card.accent}`,
+              boxShadow: glow,
+              background: `linear-gradient(160deg, ${withAlpha(card.accent, 0.14)} 0%, ${withAlpha(card.accent, 0.03)} 55%, ${T.panel} 100%)`,
+            }}>
+              <div style={{ fontFamily: T.fontLabel, fontSize: 11, fontWeight: 600, textTransform: "uppercase", color: T.textSecondary, letterSpacing: 1.5, marginBottom: 4 }}>{card.label}</div>
+              <div style={{ fontFamily: T.fontMono, fontSize: 30, fontWeight: 700, lineHeight: 1.15, color: card.accent, textShadow: `0 0 14px ${card.accent}55`, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontVariantNumeric: "tabular-nums" }}>{card.value}</div>
+              {card.rateSub && <div style={{ fontFamily: T.fontMono, fontSize: 11, color: withAlpha(card.accent, 0.7), marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{card.rateSub}</div>}
+              {card.trend}
+            </div>
+          );
+        })}
       </div>
 
       {/* Real-time traffic graph */}
